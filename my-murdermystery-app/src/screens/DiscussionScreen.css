@@ -1,0 +1,172 @@
+/* DiscussionScreen.css */
+
+.discussion-screen {
+    display: flex;
+    height: 100vh;
+}
+
+.discussion-left-panel {
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+}
+
+.character-info-discussion {
+    margin-bottom: 20px;
+}
+
+.character-info-discussion h3 {
+    margin-top: 0;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+.goals-section {
+    margin-bottom: 20px;
+}
+
+.info-cards-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-cards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.info-cards-list {
+    flex-grow: 0;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 2%; /* カード間のスペース */
+}
+
+.info-card {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 23.5%; /* カードの幅を調整 */
+    min-height: 100px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.info-card:hover {
+    background-color: #e9e9e9;
+}
+
+.info-card.owned-by-me {
+    border-left: 5px solid #4CAF50; /* 緑 */
+}
+
+.info-card.owned-by-other {
+    border-left: 5px solid #FFC107; /* 黄 */
+}
+
+.info-card.public {
+    border-left: 5px solid #2196F3; /* 青 */
+}
+
+
+.info-card-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #666;
+}
+
+.info-card-owner {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: auto; /* 下に配置 */
+}
+
+.info-card-status {
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-top: 5px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    align-self: flex-start;
+}
+
+.info-card-status.public {
+    background-color: #2196F3;
+    color: white;
+}
+
+.info-card-status.private {
+    background-color: #777;
+    color: white;
+}
+
+.discussion-right-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+}
+.tab-panel {
+    height: 80%;
+}
+.discussion-footer {
+    padding: 10px 20px;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+.card-actions {
+    display:inline-flex;
+    gap: 15px;
+}
+
+.character-list-tab {
+    padding: 10px;
+}
+
+.character-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+}
+
+.character-item h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.character-player {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.character-profile {
+    white-space: pre-wrap; /* 改行を反映させる */
+}
+.transfer-player-list {
+    display: inline-flex;
+    gap: 10px;
+}

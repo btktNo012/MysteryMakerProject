@@ -1,0 +1,204 @@
+{
+  "title": "まどろみの館殺人事件",
+  "scheduleFile": "/data/schedule.txt",
+  "synopsisFile": "/data/synopsis.txt",
+  "commonInfo": {
+    "textFile": "/data/common_info.txt"
+  },
+  "intermediateInfo": {
+    "textFile": "/data/intermediate_info.txt"
+  },
+  "discussionPhaseSettings": {
+    "firstDiscussion": {
+      "maxCardsPerPlayer": 2
+    },
+    "secondDiscussion": {
+      "maxCardsPerPlayer": 1
+    }
+  },
+  "infoCards": [
+    {
+      "id": "card_01",
+      "name": "書斎の鍵",
+      "content": "被害者の書斎の机の引き出しから、鍵が見つかった。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_02",
+      "name": "破れた手紙",
+      "content": "ゴミ箱から、破られた手紙の切れ端が見つかった。『…許さない…』という文字が読み取れる。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_03",
+      "name": "謎の薬品",
+      "content": "キッチンの棚の奥から、ラベルのない小瓶が見つかった。中には無色透明の液体が入っている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_04",
+      "name": "被害者の写真",
+      "content": "被害者が若い頃の写真が、リビングの壁に飾られていた。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_05",
+      "name": "洋館の地図",
+      "content": "洋館の各部屋の配置図が描かれた地図。重要な場所がマークされている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_06",
+      "name": "被害者の遺言書",
+      "content": "被害者が書いた遺言書。財産の分配について記されている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_07",
+      "name": "謎のメモ",
+      "content": "被害者の机の上に置かれていたメモ。『真実は一つ』とだけ書かれている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_08",
+      "name": "被害者の携帯電話",
+      "content": "被害者の携帯電話が、リビングのテーブルの上に置かれていた。ロックがかかっている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_09",
+      "name": "血痕のついたハンカチ",
+      "content": "被害者の血痕がついたハンカチが、廊下の隅に落ちていた。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_10",
+      "name": "謎の鍵束",
+      "content": "複数の鍵が束ねられたもの。どの鍵がどの扉に対応するかは不明。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_11",
+      "name": "被害者の時計",
+      "content": "被害者が愛用していた時計。時間は止まっている。",
+      "owner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_12",
+      "name": "謎の指輪",
+      "content": "被害者の指から外れた指輪。宝石が一つ欠けている。",
+      "owner": null,
+      "isPublic": false
+    }
+  ],
+  "characters": [
+    {
+      "id": "char_01",
+      "name": "速水 響",
+      "type": "PC",
+      "profile": "28歳・男性。鋭い観察眼を持つ私立探偵。",
+      "storyFile": "/data/char_01_story.txt",
+      "mapImageFile": "/images/map_common.png",
+      "goals": [
+        { "text": "事件の犯人を見つけ出す。", "points": 30 },
+        { "text": "自分の過去の秘密を守り通す。", "points": 10 }
+      ]
+    },
+    {
+      "id": "char_02",
+      "name": "一条 麗奈",
+      "type": "PC",
+      "profile": "22歳・女性。資産家の令嬢で、被害者の婚約者。",
+      "storyFile": "/data/char_02_story.txt",
+      "mapImageFile": "/images/map_char_02_secret.png",
+      "goals": [
+        { "text": "自分が犯人だと疑われない。", "points": 20 },
+        { "text": "被害者との間にあった隠し事を誰にも知られない。", "points": 20 }
+      ]
+    },
+    {
+      "id": "char_03",
+      "name": "神崎 譲二",
+      "type": "PC",
+      "profile": "45歳・男性。被害者のビジネスパートナー。",
+      "storyFile": "./data/char_03_story.txt",
+      "mapImageFile": "/images/map_common.png",
+      "goals": [
+        { "text": "事件の犯人を見つけ出す。", "points": 20 },
+        { "text": "被害者と共謀して公金横領をしていた事実を隠し通す", "points": 30 }
+      ]
+    },
+    {
+      "id": "npc_victim",
+      "name": "西園寺 剛",
+      "type": "NPC",
+      "profile": "55歳・男性。この洋館の主。自室で殺害された。"
+    }
+  ],
+  "endings": [
+    {
+      "votedCharId": "char_01",
+      "endingFile": "/data/ending_char01.txt",
+      "title": "エンディング：速水 響"
+    },
+    {
+      "votedCharId": "char_02",
+      "endingFile": "/data/ending_char02.txt",
+      "title": "エンディング：一条 麗奈"
+    },
+    {
+      "votedCharId": "char_03",
+      "endingFile": "/data/ending_char03.txt",
+      "title": "エンディング：神崎 譲二"
+    },
+    {
+      "votedCharId": "npc_victim",
+      "endingFile": "/data/ending_victim.txt",
+      "title": "エンディング：西園寺 剛"
+    },
+    {
+      "votedCharId": "default",
+      "endingFile": "/data/ending_default_bad.txt",
+      "title": "エンディング：真相にはたどり着けなかった"
+    }
+  ],
+  "debriefing": {
+    "mainCommentary": {
+      "title": "解説",
+      "file": "/data/debriefing_main.txt"
+    },
+    "characterEndings": [
+      {
+        "id": "reveal_char_01",
+        "title": "速水 響 END",
+        "file": "/data/ending_char01.txt"
+      },
+      {
+        "id": "reveal_char_02",
+        "title": "一条 麗奈 END",
+        "file": "/data/ending_char02.txt"
+      },
+      {
+        "id": "reveal_char_03",
+        "title": "神崎 譲二 END",
+        "file": "/data/ending_char03.txt"
+      },
+      {
+        "id": "reveal_victim",
+        "title": "西園寺 剛 END",
+        "file": "/data/ending_victim.txt"
+      }
+    ]
+  }
+}

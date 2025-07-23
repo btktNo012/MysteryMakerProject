@@ -1,0 +1,24 @@
+.waiting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+.button-group button{
+  margin: 0 12px;
+}
+.player-list {
+  margin: 20px 0;
+  min-width: 200px;
+  text-align: left;
+}
+
+.leave-button {
+  background-color: #f44336; /* 赤色 */
+}
+
+.leave-button:hover {
+    background-color: #d32f2f;
+}

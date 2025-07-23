@@ -1,0 +1,47 @@
+/* Tabs.css */
+.tabs-container {
+  width: 100%;
+}
+
+.tab-list {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+  padding-left: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.tab-list-item {
+  list-style: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  background-color: #333;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  margin-right: 5px;
+  position: relative;
+  bottom: -1px; /* アクティブでないタブを少し下げる */
+  transition: background-color 0.2s;
+}
+
+.tab-list-item:hover {
+  background-color: #666;
+}
+
+.tab-list-item.active {
+  background-color: #000;
+  border-bottom: 2px solid #fff; /* 下線を白にして、下のパネルと繋がって見えるようにする */
+  font-weight: bold;
+}
+
+.tab-panel {
+  padding: 20px;
+  border: 2px solid #f0f0f0;
+  border-top: none;
+  background-color: #000;
+  /* パネルの高さを確保し、スクロール可能にする */
+  height: 450px;
+  overflow-y: auto;
+  line-height: 1.6;
+}

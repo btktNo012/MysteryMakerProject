@@ -1,0 +1,107 @@
+/* Modal.css */
+
+/* モーダルの背景 */
+.modal-overlay {
+  position: fixed; /* 画面全体を覆う */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* 半透明の黒 */
+  display: flex;
+  align-items: center; /* 垂直方向中央揃え */
+  justify-content: center; /* 水平方向中央揃え */
+  z-index: 1000; /* 他の要素より手前に表示 */
+}
+
+/* モーダルウィンドウ本体 */
+.modal-content {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 720px;
+  text-align: center;
+}
+
+/* モーダルのタイトル */
+.modal-title {
+  color: rgba(0, 0, 0);
+  margin-bottom: 32px;
+  font-size: 2.4rem;
+}
+.modal-body {
+  margin-bottom: 40px;
+}
+.modal-body input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1.8rem;
+}
+.modal-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* 入力フィールド間のスペース */
+  margin-bottom: 24px; /* 入力フィールド全体の下部マージン */
+}
+/* モーダル内のメッセージ */
+.modal-message {
+  color: rgba(0, 0, 0);
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  line-height: 2.6;
+  white-space: pre-wrap;
+}
+/** モーダル内のメッセージ（エラー） */
+.error-message {
+  color: #f44336; /* 赤色 */
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* ボタンを横に並べるためのコンテナ */
+.modal-buttons {
+  display: flex;
+  justify-content: center; /* ボタンを中央に寄せる */
+  gap: 15px; /* ボタン間のスペース */
+}
+
+/* モーダルのボタンの基本スタイル */
+.modal-button {
+  padding: 10px 25px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* YESボタン（肯定的なアクション）のスタイル */
+.modal-button-yes {
+  background-color: #4CAF50; /* 緑色 */
+  color: white;
+}
+.modal-button-yes:hover {
+  background-color: #45a049;
+}
+
+/* NOボタン（否定的なアクション）のスタイル */
+.modal-button-no {
+  background-color: #f44336; /* 赤色 */
+  color: white;
+}
+.modal-button-no:hover {
+  background-color: #e53935;
+}
+
+/* OKボタン（通知のみの場合）のスタイル */
+.modal-button-ok {
+    background-color: #008CBA; /* 青色 */
+    color: white;
+}
+.modal-button-ok:hover {
+    background-color: #007ba7;
+}

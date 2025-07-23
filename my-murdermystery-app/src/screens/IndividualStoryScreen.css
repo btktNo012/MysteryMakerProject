@@ -1,0 +1,77 @@
+/* IndividualStoryScreen.css */
+.individual-story-container {
+  padding: 20px;
+  max-width: 1200px; /* 左右に並べるので最大幅を広げる */
+  margin: auto;
+}
+
+/* Flexboxを使って左右分割のコンテナを作成 */
+.main-content-wrapper {
+  display: flex;
+  gap: 20px; /* 左右エリア間の隙間 */
+}
+
+/* 左側の情報エリア */
+.ho-left-panel {
+  flex: 2; /* 右パネルに対して2倍の幅を取る */
+  min-width: 0; /* flexアイテムが縮小できるようにするため */
+}
+
+/* 右側の地図エリア */
+.ho-right-panel {
+  flex: 1; /* 左パネルに対して1倍の幅を取る */
+  min-width: 0;
+  display: flex;
+  flex-direction: column; /* 地図のタイトルと画像を縦に並べる */
+}
+
+.story-content-area {
+  height: 500px; /* 高さを少し調整 */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 15px;
+  line-height: 1.6;
+}
+
+.goals-section {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #000;
+  border-left: 5px solid #4CAF50;
+}
+
+.goals-title {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+.goals-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.goal-item {
+  margin-bottom: 8px;
+}
+
+/* 地図のスタイル */
+.map-title {
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.map-image {
+  width: 100%;
+  height: auto; /* アスペクト比を維持 */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* ナビゲーションボタンエリア */
+.navigation-area {
+  display: flex;
+  justify-content: flex-end; /* 右寄せ */
+  margin-top: 20px;
+  gap: 10px; /* ボタン間の隙間 */
+}

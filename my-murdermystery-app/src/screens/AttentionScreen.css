@@ -1,0 +1,48 @@
+/* AttentionScreen.css */
+
+.attention-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* 画面の高さいっぱいに広げる */
+  background-color: #282c34; /* 背景色を少し暗めに */
+  color: white;
+  text-align: center;
+  opacity: 0; /* 初期状態は透明 */
+
+  /* fadeIn アニメーションを適用 */
+  animation: fadeIn 2s ease-out forwards;
+}
+
+/* 画面から消える時のアニメーションを適用するクラス */
+.attention-container.fade-out {
+  /* fadeOut アニメーションを適用 */
+  animation: fadeOut 2s ease-in forwards;
+}
+
+/* フェードインのアニメーション定義 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* フェードアウトのアニメーション定義 */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.logo-image {
+  width: 320px; /* ロゴのサイズを調整 */
+  height: auto;
+  border-radius: 20px; /* 角を丸くする */
+}

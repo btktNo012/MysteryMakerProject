@@ -1,0 +1,61 @@
+/* DebriefingScreen.css */
+.debriefing-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: auto;
+}
+
+.debriefing-wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+/* 左側のコントロールパネル */
+.control-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 600px;
+}
+
+/* 右側の表示エリア */
+.display-panel {
+  flex: 2;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  height: 60vh; /* 高さを画面の高さの60%に */
+  overflow-y: auto;
+  line-height: 1.6;
+  width: 600px;
+}
+
+.control-button {
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  text-align: left;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  color:black;
+}
+
+.control-button:hover {
+  background-color: #f0f0f0;
+}
+
+.control-button.active {
+  background-color: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+.social-share {
+  margin-top: auto; /* ボタンを一番下に配置 */
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}

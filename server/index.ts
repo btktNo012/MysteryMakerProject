@@ -18,7 +18,7 @@ const READING_TIME_SECONDS = 600; // 10 minutes
 const READING_TIME_SECONDS_EXTENSION = 180; // 3 minutes
 
 // --- シナリオデータ読み込み ---
-const scenarioPath = path.join(__dirname, '../my-murdermystery-app/public/scenario.json');
+const scenarioPath = path.join(__dirname, '../client/public/scenario.json');
 const scenarioData = JSON.parse(fs.readFileSync(scenarioPath, 'utf-8'));
 const maxPlayers = scenarioData.characters.filter((c: any) => c.type === 'PC').length;
 

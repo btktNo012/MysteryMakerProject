@@ -345,9 +345,7 @@ function App() {
   const handleProceedToDebriefing = () => setGamePhase('debriefing');
 
   const handleProceedToSecondDiscussion = () => {
-    if (socket && roomId) {
-      socket.emit('proceedToSecondDiscussion', roomId);
-    }
+    setGamePhase('secondDiscussion');
   };
 
 
@@ -374,7 +372,7 @@ function App() {
 
     switch (gamePhase) {
       case 'attention': return <AttentionScreen onNext={() => setGamePhase('start')} />;
-      case 'start': return <StartScreen title={scenario!.title} onCreateRoom={() => setIsCreateRoomModalOpen(true)} onFindRoom={() => setIsFindRoomModalOpen(true)} onExpMurder={() => setIsExpMurderModalOpen(true)} />;
+      case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => setIsCreateRoomModalOpen(true)} onFindRoom={() => setIsFindRoomModalOpen(true)} onExpMurder={() => setIsExpMurderModalOpen(true)} />;
       case 'waiting': return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={maxPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
       case 'schedule': return <InfoDisplayScreen title="進行スケジュール" filePath={scenario!.scheduleFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('synopsis')} />;
       case 'synopsis': return <InfoDisplayScreen title="あらすじ" filePath={scenario!.synopsisFile} onBackFlg={true} onBack={() => setGamePhase('schedule')} onNext={() => setGamePhase('characterSelect')} />;
@@ -471,7 +469,7 @@ function App() {
           ending={targetEnding}
           onNext={handleProceedToDebriefing}
         />;
-      case 'debriefing': return <DebriefingScreen scenario={scenario!} isMaster={myPlayer?.isMaster || false} onCloseRoom={handleCloseRoom} />;
+      case 'debriefing': return <DebriefingScreen scenario={scenario!} infoCards={infoCards} players={players} isMaster={myPlayer?.isMaster || false} onCloseRoom={handleCloseRoom} />;
       default: return <AttentionScreen onNext={() => setGamePhase('start')} />;
     }
   };

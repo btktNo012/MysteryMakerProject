@@ -3,6 +3,7 @@
 .discussion-screen {
     display: flex;
     height: 100vh;
+    overflow: hidden;
 }
 
 .discussion-left-panel {
@@ -47,6 +48,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px 2%; /* カード間のスペース */
+    max-height: 80%;
 }
 
 .info-card {
@@ -85,6 +87,14 @@
     font-weight: bold;
     margin-bottom: 5px;
     color: #666;
+}
+
+.info-card-icon {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    align-self: center;
 }
 
 .info-card-owner {
@@ -146,10 +156,24 @@
 }
 
 .character-item {
+    display: flex;
+    align-items: center;
     margin-bottom: 15px;
     padding: 10px;
     border: 1px solid #eee;
     border-radius: 5px;
+}
+
+.character-item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.character-item-details {
+    flex-grow: 1;
 }
 
 .character-item h4 {

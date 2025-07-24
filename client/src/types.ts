@@ -6,13 +6,14 @@ export interface Goal {
 
 // キャラクター情報
 export interface Character {
-    id: string;             // キャラクターID
-    name: string;           // キャラクター名
-    type: 'PC' | 'NPC';     // キャラクタータイプ
-    profile: string;        // プロフィール
-    goals?: Goal[];         // 目標(PCのみ)
-    storyFile?: string;     // ストーリーファイルパス(PCのみ)
-    mapImageFile?: string;  // マップ画像ファイルパス(PCのみ)
+  id: string;
+  name: string;
+  type: 'PC' | 'NPC';
+  profile: string;
+  imageFile?: string;
+  storyFile?: string;
+  goals?: { text: string; points: number }[];
+  mapImageFile?: string;
 }
 // エンディング情報
 export interface Ending {
@@ -34,6 +35,7 @@ export interface DebriefingCharacterEnding {
 
 export interface ScenarioData {
   title: string;
+  titleImage?: string; // Optional title image path
   scheduleFile: string,
   synopsisFile: string,
   commonInfo: {
@@ -78,6 +80,7 @@ export type CharacterSelections = Record<string, string | null>; // { [character
 export interface InfoCard {
   id: string;
   name: string;
+  iconFile?: string;
   content: string;
   owner: string | null; // userId of the owner
   isPublic: boolean;

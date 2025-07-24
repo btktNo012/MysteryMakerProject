@@ -49,13 +49,16 @@ const CharacterListTab: React.FC<{
         const playerName = getPlayerNameByUserId(selectedUserId || null);
         return (
           <div key={char.id} className="character-item">
-            <h4>{char.name} <span style={{fontSize: '0.8em', color: '#777'}}>({char.type})</span></h4>
-            {char.type === 'PC' && (
-              <p className="character-player">
-                担当: {playerName || '未選択'}
-              </p>
-            )}
-            <p className="character-profile">{char.profile}</p>
+            {char.imageFile && <img src={char.imageFile} alt={char.name} className="character-item-image" />}
+            <div className="character-item-details">
+              <h4>{char.name} <span style={{fontSize: '0.8em', color: '#777'}}>({char.type})</span></h4>
+              {char.type === 'PC' && (
+                <p className="character-player">
+                  担当: {playerName || '未選択'}
+                </p>
+              )}
+              <p className="character-profile">{char.profile}</p>
+            </div>
           </div>
         );
       })}
@@ -260,6 +263,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                     className={cardClassName}
                     onClick={() => handleCardClick(card)}
                   >
+                    {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
                     <div className="info-card-name">{card.name}</div>
                     <div className="info-card-owner">所有者: {ownerName}</div>
                     {card.owner && (

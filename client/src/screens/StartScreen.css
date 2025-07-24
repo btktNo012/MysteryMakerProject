@@ -1,44 +1,64 @@
-/* StartScreen.css */
-
 .start-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background-color: #f0f2f5; /* 少し明るい背景色 */
-  padding: 20px;
-  box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* 背景画像の上に半透明の黒いオーバーレイをかける */
+.start-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.start-content {
+    position: relative;
+    z-index: 2;
+    color: white;
 }
 
 .game-title {
-  font-family: 'Georgia', 'Times New Roman', serif; /* 少し格調高いフォント */
-  font-size: 3rem;
-  color: #333;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
-  text-align: center;
-  line-height: 1.4; /* タイトルの行間を少し広げる */
+    font-size: 3rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    margin-bottom: 40px;
 }
 
-/* 小さな画面向けのメディアクエリ */
-@media (max-width: 600px) {
-  .game-title {
-    font-size: 2.5rem;
-  }
+.button-group-start {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
-.button-group {
-  margin-top: 32px;
-}
-/* STARTボタンのサイズを少し大きく調整（必要に応じて） */
 .start-button {
-  transform: scale(1.2);
-}
-.button-group .start-button {
-  margin: 0 40px; /* ボタン間のスペースを調整 */
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    min-width: 200px;
 }
 
 .exp-muerder {
-  transform: scale(1.2);
+    background-color: #6c757d;
+    font-size: 1.2rem;
+    min-width: 220px;
+}
+
+.version-label {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    font-size: 0.8rem;
+    color: #eee;
+    z-index: 2;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
 }

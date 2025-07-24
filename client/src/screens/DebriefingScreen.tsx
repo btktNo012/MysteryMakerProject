@@ -1,36 +1,54 @@
 // src/screens/DebriefingScreen.tsx
 import React, { useState } from 'react';
-import { type ScenarioData } from '../types';
+import { type ScenarioData, type InfoCard, type Player } from '../types';
 import TextRenderer from '../components/TextRenderer';
 import StyledButton from '../components/StyledButton';
+import Modal from '../components/Modal';
 import './DebriefingScreen.css';
+import './DiscussionScreen.css'; // 流用
 
 interface DebriefingScreenProps {
   scenario: ScenarioData;
+  infoCards: InfoCard[];
+  players: Player[];
   isMaster: boolean;
   onCloseRoom: () => void;
 }
 
-const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, isMaster, onCloseRoom }) => {
-  // 表示するコンテンツのファイルパスを管理するState
+const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards, players, isMaster, onCloseRoom }) => {
+  const [activeContent, setActiveContent] = useState<'commentary' | 'infoCards' | null>(null);
   const [activeFile, setActiveFile] = useState<string | null>(null);
-  // アクティブなボタンを識別するためのState
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+  const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
+
   const { mainCommentary, characterEndings } = scenario.debriefing;
-  
-  // 表示するコンテンツのリストを結合
   const allContents = [
     { id: 'main', ...mainCommentary },
     ...characterEndings
   ];
 
-  const handleButtonClick = (file: string, id: string) => {
+  const handleCommentaryButtonClick = (file: string, id: string) => {
+    setActiveContent('commentary');
     setActiveFile(file);
     setActiveId(id);
   };
 
-  // Xへの投稿用関数
+  const handleInfoCardsButtonClick = () => {
+    setActiveContent('infoCards');
+    setActiveFile(null); // ファイル表示ではないのでクリア
+    setActiveId('infoCards');
+  };
+
+  const handleCardClick = (card: InfoCard) => {
+    setSelectedCard(card);
+  };
+
+  const getOwnerName = (ownerId: string | null) => {
+    if (!ownerId) return 'なし';
+    const owner = players.find(p => p.userId === ownerId);
+    return owner ? owner.name : '不明';
+  };
+
   const handleShareToX = () => {
     const scenarioTitle = scenario.title;
     const text = `マーダーミステリー『${scenarioTitle}』をプレイしました！\n\n#マダミス #マーダーミステリー\n#${scenarioTitle.replace(/\s/g, '')}`;
@@ -42,17 +60,22 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, isMaster,
     <div className="debriefing-container">
       <h1>感想戦</h1>
       <div className="debriefing-wrapper">
-        {/* --- 左パネル (ボタン) --- */}
         <div className="control-panel">
           {allContents.map(content => (
             <button
               key={content.id || content.title}
               className={`control-button ${activeId === (content.id || content.title) ? 'active' : ''}`}
-              onClick={() => handleButtonClick(content.file, (content.id || content.title))}
+              onClick={() => handleCommentaryButtonClick(content.file, (content.id || content.title))}
             >
               {content.title}
             </button>
           ))}
+          <button
+            className={`control-button ${activeId === 'infoCards' ? 'active' : ''}`}
+            onClick={handleInfoCardsButtonClick}
+          >
+            情報カード
+          </button>
           <div className="social-share">
             <StyledButton onClick={handleShareToX}>
               Xで感想をシェアする
@@ -67,15 +90,44 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, isMaster,
           )}
         </div>
         
-        {/* --- 右パネル (コンテンツ表示) --- */}
         <div className="display-panel">
-          {activeFile ? (
+          {activeContent === 'commentary' && activeFile && (
             <TextRenderer filePath={activeFile} />
-          ) : (
-            <p>左のボタンを押して、解説や各エンディングを確認してください。</p>
+          )}
+          {activeContent === 'infoCards' && (
+            <div className="info-cards-list"> 
+              {infoCards.map(card => (
+                <div key={card.id} className="info-card" onClick={() => handleCardClick(card)}>
+                  {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
+                  <div className="info-card-name">{card.name}</div>
+                  <div className="info-card-owner">
+                    所有者: {getOwnerName(card.owner)}
+                  </div>
+                   <div className={`info-card-status ${card.isPublic ? 'public' : 'private'}`}>
+                      {card.isPublic ? '全体公開' : '非公開'}
+                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!activeContent && (
+            <p>左のボタンを押して、解説や各エンディング、情報カードを確認してください。</p>
           )}
         </div>
       </div>
+
+      {selectedCard && (
+        <Modal
+          isOpen={true}
+          message={selectedCard.name}
+          onClose={() => setSelectedCard(null)}
+          closeButtonText="閉じる"
+        >
+          <div className="modal-message" style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}>
+            {selectedCard.content}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

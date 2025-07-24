@@ -77,6 +77,7 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
               className={`char-card ${isSelectedByMe ? 'selected-me' : ''} ${isSelectedByOther ? 'selected-other' : ''}`}
               onClick={() => handleCardClick(char)}
             >
+              {char.imageFile && <img src={char.imageFile} alt={char.name} className="char-image" />}
               <h2 className="char-name">{char.name}</h2>
               <p className="char-profile">{char.profile}</p>
               {selectorName && <p className="char-selector">選択者: {selectorName}</p>}

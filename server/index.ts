@@ -579,28 +579,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  socket.on('proceedToSecondDiscussion', (roomId: string) => {
-    const room = rooms[roomId];
-    // このイベントはマスター以外もトリガーできる
-    if (room && room.players.find(p => p.id === socket.id) && room.gamePhase === 'interlude') {
-      updateRoomActivity(room);
-      room.gamePhase = 'secondDiscussion';
-
-      // secondDiscussion用のタイマーを初期化
-      const discussionSettings = scenarioData.discussionPhaseSettings.secondDiscussion;
-      const duration = discussionSettings ? discussionSettings.duration : 300; // fallback
-      room.discussionTimer = {
-        endTime: null,
-        isTicking: false,
-        phase: 'secondDiscussion',
-        endState: 'none',
-      };
-
-      console.log(`Proceeding to second discussion in room: ${roomId}. Phase: ${room.gamePhase}`);
-      io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
-      io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer); // 初期化されたタイマーを通知
-    }
-  });
+  
 });
 
 const PORT = process.env.PORT || 3001;

@@ -39,7 +39,7 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({
         </ul>
       </div>
 
-      <div className="button-group">
+      <div className="button-group-waiting">
         {isMaster ? (
           <>
             <StyledButton onClick={onStart} disabled={!canStart}>

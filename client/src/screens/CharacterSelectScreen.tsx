@@ -61,30 +61,34 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   return (
     <div className="char-select-container">
       <h1>キャラクターセレクト</h1>
-      <p className="char-select-info">
-        演じるキャラクターを相談して決めてください。
-      </p>
-      <ul className="char-list">
-        {playerCharacters.map(char => {
-          const selectorId = characterSelections[char.id];
-          const isSelectedByMe = selectorId === myPlayerId;
-          const isSelectedByOther = selectorId && !isSelectedByMe;
-          const selectorName = getSelectorName(char.id);
+      <div className="char-select-content">
+        <p className="char-select-info">
+          演じるキャラクターを決めてください。
+        </p>
+        <ul className="char-list">
+          {playerCharacters.map(char => {
+            const selectorId = characterSelections[char.id];
+            const isSelectedByMe = selectorId === myPlayerId;
+            const isSelectedByOther = selectorId && !isSelectedByMe;
+            const selectorName = getSelectorName(char.id);
 
-          return (
-            <li 
-              key={char.id} 
-              className={`char-card ${isSelectedByMe ? 'selected-me' : ''} ${isSelectedByOther ? 'selected-other' : ''}`}
-              onClick={() => handleCardClick(char)}
-            >
-              {char.imageFile && <img src={char.imageFile} alt={char.name} className="char-image" />}
-              <h2 className="char-name">{char.name}</h2>
-              <p className="char-profile">{char.profile}</p>
-              {selectorName && <p className="char-selector">選択者: {selectorName}</p>}
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li 
+                key={char.id} 
+                className={`char-card ${isSelectedByMe ? 'selected-me' : ''} ${isSelectedByOther ? 'selected-other' : ''}`}
+                onClick={() => handleCardClick(char)}
+              >
+                {char.imageFile && <div className='char-image'><img src={char.imageFile} alt={char.name} /></div>}
+                <div className='char-detail'>
+                  <h2 className="char-name">{char.name}</h2>
+                  <p className="char-profile">{char.profile}</p>
+                  {selectorName && <p className="char-selector">選択者: {selectorName}</p>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
       <div className="navigation-area">
         <StyledButton onClick={onBack}>
           BACK

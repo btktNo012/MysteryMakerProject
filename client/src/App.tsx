@@ -337,14 +337,19 @@ function App() {
   // 投票ハンドラ
   const handleSubmitVote = (votedCharacterId: string) => socket?.emit('submitVote', { roomId, userId, votedCharacterId });
   const handleProceedToEnding = () => {
+    socket?.emit('changeGamePhase', { roomId, newPhase: 'ending' });
     setGamePhase('ending');
     setIsVoteResultModalOpen(false); // モーダルを閉じる
   }
 
   // エンディング・感想戦ハンドラ
-  const handleProceedToDebriefing = () => setGamePhase('debriefing');
+  const handleProceedToDebriefing = () => {
+    socket?.emit('changeGamePhase', { roomId, newPhase: 'debriefing' });
+    setGamePhase('debriefing');
+  }
 
   const handleProceedToSecondDiscussion = () => {
+    socket?.emit('changeGamePhase', { roomId, newPhase: 'secondDiscussion' });
     setGamePhase('secondDiscussion');
   };
 
@@ -380,7 +385,6 @@ function App() {
       case 'commonInfo': return (
         <>
           <InfoDisplayScreen title="ハンドアウト読み込み：共通情報" filePath={scenario!.commonInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('individualStory')} />
-          <div className='note'>※ハンドアウトの内容は議論フェイズでも確認できます</div>
         </>
       );
       case 'individualStory':
@@ -388,7 +392,6 @@ function App() {
         return (
           <>
             <IndividualStoryScreen character={selectedChar} onBack={() => setGamePhase('commonInfo')} onNext={handleProceedToDiscussion} isMaster={myPlayer?.isMaster || false} />
-            <div className='note'>※ハンドアウトの内容は議論フェイズでも確認できます</div>
           </>
         );
       case 'firstDiscussion':

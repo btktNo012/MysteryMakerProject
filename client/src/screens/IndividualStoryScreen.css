@@ -4,7 +4,11 @@
   max-width: 1200px; /* 左右に並べるので最大幅を広げる */
   margin: auto;
 }
-
+.individual-story-content{
+  height: 600px;
+  padding: 15px;
+  margin: auto;
+}
 /* Flexboxを使って左右分割のコンテナを作成 */
 .main-content-wrapper {
   display: flex;

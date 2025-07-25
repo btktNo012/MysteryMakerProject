@@ -325,6 +325,17 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // クライアント主導のフェーズ変更をサーバーに通知させ、状態を同期させる
+  socket.on('changeGamePhase', ({ roomId, newPhase }: { roomId: string, newPhase: GamePhase }) => {
+    const room = rooms[roomId];
+    if (room) {
+      updateRoomActivity(room);
+      room.gamePhase = newPhase;
+      console.log(`Room ${roomId} phase changed to ${newPhase} by client request.`);
+      // Note: ここでは他のクライアントにemitしない。リロード時の状態復元のためだけに使う。
+    }
+  });
+
   // --- 議論タイマー関連 (ルームマスターのみ) ---
   socket.on('startDiscussionTimer', ({ roomId, userId, phase, durationSeconds }: { roomId: string, userId: string, phase: 'firstDiscussion' | 'secondDiscussion', durationSeconds: number }) => {
     const room = rooms[roomId];
@@ -343,7 +354,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('pauseDiscussionTimer', ({ roomId, userId }: { roomId: string, userId: string }) => {
     const room = rooms[roomId];
-    if (!room || room.masterUserId !== userId || !room.discussionTimer.endTime) return;
+    if (!room || !room.discussionTimer.endTime) return;
     updateRoomActivity(room);
 
     const remainingTime = room.discussionTimer.endTime - Date.now();
@@ -351,13 +362,13 @@ io.on('connection', (socket: Socket) => {
     // 残り時間を保持するためにendTimeを更新
     room.discussionTimer.endTime = remainingTime;
 
-    console.log(`Room ${roomId}: Discussion timer paused.`);
+    console.log(`Room ${roomId}: Discussion timer paused by ${userId}.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
   socket.on('resumeDiscussionTimer', ({ roomId, userId }: { roomId: string, userId: string }) => {
     const room = rooms[roomId];
-    if (!room || room.masterUserId !== userId || !room.discussionTimer.endTime) return;
+    if (!room || !room.discussionTimer.endTime) return;
     updateRoomActivity(room);
 
     // endTimeは一時停止時に残り時間(ms)に変換されているはず
@@ -365,7 +376,7 @@ io.on('connection', (socket: Socket) => {
     room.discussionTimer.isTicking = true;
     room.discussionTimer.endTime = newEndTime;
 
-    console.log(`Room ${roomId}: Discussion timer resumed.`);
+    console.log(`Room ${roomId}: Discussion timer resumed by ${userId}.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 

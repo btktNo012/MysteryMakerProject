@@ -51,12 +51,15 @@ const CharacterListTab: React.FC<{
           <div key={char.id} className="character-item">
             {char.imageFile && <img src={char.imageFile} alt={char.name} className="character-item-image" />}
             <div className="character-item-details">
-              <h4>{char.name} <span style={{fontSize: '0.8em', color: '#777'}}>({char.type})</span></h4>
+            <h4>
+              {char.name}
               {char.type === 'PC' && (
-                <p className="character-player">
-                  担当: {playerName || '未選択'}
-                </p>
+                <span style={{ fontSize: '0.9em', color: '#888', marginLeft: '8px' }}>
+                  {playerName || '未選択'}
+                </span>
               )}
+              <span style={{fontSize: '0.8em', color: '#777'}}>({char.type})</span>
+            </h4>
               <p className="character-profile">{char.profile}</p>
             </div>
           </div>
@@ -245,7 +248,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                 <h4>情報カード</h4>
                 <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
             </div>
-            <div className="info-cards-list">
+            <div className="discussion-info-cards-list">
               {infoCards.map(card => {
                 const ownerName = getOwnerDisplayName(card.owner);
                 let cardClassName = 'info-card';
@@ -290,19 +293,29 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                     onTimeUp={() => {}} // サーバー側で処理
                 />
             </div>
-            {isMaster && (
             <div className="buttons-wrapper">
-                {!discussionTimer.endTime ? (
-                  <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
-                ) : (
-                <>
-                    <StyledButton onClick={onRequestEnd} style={{backgroundColor: '#f44336'}}>
-                    議論強制終了
-                    </StyledButton>
-                </>
+                {discussionTimer.endTime && (
+                    <>
+                        {discussionTimer.isTicking ? (
+                            <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
+                        ) : (
+                            <StyledButton onClick={onResumeTimer}>再開</StyledButton>
+                        )}
+                    </>
+                )}
+                {isMaster && (
+                    <>
+                        {!discussionTimer.endTime && (
+                            <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
+                        )}
+                        {discussionTimer.endTime && (
+                            <StyledButton onClick={onRequestEnd} style={{backgroundColor: '#f44336'}}>
+                                議論強制終了
+                            </StyledButton>
+                        )}
+                    </>
                 )}
             </div>
-            )}
         </div>
       </div>
       

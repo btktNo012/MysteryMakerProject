@@ -1,19 +1,26 @@
 .char-select-container {
     padding: 20px;
     text-align: center;
+    max-width: 800px;
+    margin: auto;
 }
 
 .char-select-info {
     margin-bottom: 30px;
 }
-
+.char-select-content {
+    height: 600px;
+    padding: 15px;
+}
 .char-list {
     list-style: none;
     padding: 0;
-    display: flex;
+    display: grid;
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
+    max-height: 550px; /* 最大高さを設定 */
+    overflow-y: auto;
 }
 
 .char-card {
@@ -21,10 +28,13 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 20px;
-    width: 250px;
+    width: 650px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
 }
 
 .char-card:hover {
@@ -42,30 +52,49 @@
     cursor: not-allowed;
     opacity: 0.7;
 }
-
 .char-image {
+    flex-shrink: 0;     /* 画像のサイズを固定 */
+    max-width: 120px;
+    max-height: 120px;
+    overflow: hidden;   /* 画像がはみ出さないように */
+    display: flex;
+    align-items: center;
+}
+.char-image img {
     width: 100%;
-    height: 150px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: cover;  /* 画像のアスペクト比を維持しつつ、枠に収める */
     border-radius: 4px;
     margin-bottom: 15px;
+}
+.char-detail {
+  position: relative;
+  flex: 1; /* 残りのスペースを占める */
+  min-width: 0;
 }
 
 .char-name {
     margin: 0 0 10px 0;
     color: #333;
+    display: flex;
 }
 
 .char-profile {
     font-size: 0.9rem;
     color: #666;
-    min-height: 60px;
+    min-height: 22px;
+    text-align: left;
 }
 
 .char-selector {
-    margin-top: 15px;
     font-weight: bold;
     color: #d9534f;
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.9em;
+    text-align: right;
+    width: auto;
 }
 
 .navigation-area {

@@ -21,35 +21,38 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
     <div className="individual-story-container">
       <h1>ハンドアウト読み込み：個別ストーリー【{character.name}】</h1>
       
-      <div className="main-content-wrapper">
-        <div className="ho-left-panel">
-          <div className="story-content-area">
-            <TextRenderer filePath={character.storyFile} />
-            {character.goals && character.goals.length > 0 && (
-              <div className="goals-section">
-                <h2 className="goals-title">あなたの目的</h2>
-                <ul className="goals-list">
-                  {character.goals.map((goal, index) => (
-                    <li key={index} className="goal-item">
-                      {goal.text} ({goal.points}点)
-                    </li>
-                  ))}
-                </ul>
-              </div>
+      <div className="individual-story-content">
+        <div className="main-content-wrapper">
+          <div className="ho-left-panel">
+            <div className="story-content-area">
+              <TextRenderer filePath={character.storyFile} />
+              {character.goals && character.goals.length > 0 && (
+                <div className="goals-section">
+                  <h2 className="goals-title">あなたの目的</h2>
+                  <ul className="goals-list">
+                    {character.goals.map((goal, index) => (
+                      <li key={index} className="goal-item">
+                        {goal.text} ({goal.points}点)
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="ho-right-panel">
+            <h2 className="map-title">現場見取り図</h2>
+            {character.mapImageFile && (
+              <img 
+                src={character.mapImageFile} 
+                alt="現場見取り図" 
+                className="map-image"
+              />
             )}
           </div>
         </div>
-
-        <div className="ho-right-panel">
-          <h2 className="map-title">現場見取り図</h2>
-          {character.mapImageFile && (
-            <img 
-              src={character.mapImageFile} 
-              alt="現場見取り図" 
-              className="map-image"
-            />
-          )}
-        </div>
+        <div className='note'>※ハンドアウトの内容は議論フェイズでも確認できます</div>
       </div>
 
       <div className="navigation-area">

@@ -1,6 +1,6 @@
 // src/screens/DebriefingScreen.tsx
 import React, { useState } from 'react';
-import { type ScenarioData, type InfoCard, type Player } from '../types';
+import { type ScenarioData, type InfoCard, type Player, type Character } from '../types';
 import TextRenderer from '../components/TextRenderer';
 import StyledButton from '../components/StyledButton';
 import Modal from '../components/Modal';
@@ -16,7 +16,7 @@ interface DebriefingScreenProps {
 }
 
 const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards, players, isMaster, onCloseRoom }) => {
-  const [activeContent, setActiveContent] = useState<'commentary' | 'infoCards' | null>(null);
+  const [activeContent, setActiveContent] = useState<'commentary' | 'infoCards' | 'goals' | null>(null);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
@@ -35,8 +35,14 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
 
   const handleInfoCardsButtonClick = () => {
     setActiveContent('infoCards');
-    setActiveFile(null); // ファイル表示ではないのでクリア
+    setActiveFile(null);
     setActiveId('infoCards');
+  };
+
+  const handleGoalsButtonClick = () => {
+    setActiveContent('goals');
+    setActiveFile(null);
+    setActiveId('goals');
   };
 
   const handleCardClick = (card: InfoCard) => {
@@ -76,6 +82,12 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
           >
             情報カード
           </button>
+          <button
+            className={`control-button ${activeId === 'goals' ? 'active' : ''}`}
+            onClick={handleGoalsButtonClick}
+          >
+            得点計算
+          </button>
           <div className="social-share">
             <StyledButton onClick={handleShareToX}>
               Xで感想をシェアする
@@ -95,7 +107,7 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
             <TextRenderer filePath={activeFile} />
           )}
           {activeContent === 'infoCards' && (
-            <div className="info-cards-list"> 
+            <div className="debriefing-info-cards-list"> 
               {infoCards.map(card => (
                 <div key={card.id} className="info-card" onClick={() => handleCardClick(card)}>
                   {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
@@ -110,8 +122,23 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
               ))}
             </div>
           )}
+          {activeContent === 'goals' && (
+            <div className="goals-display">
+              <h2>キャラクター別目標</h2>
+              {scenario.characters.filter(c => c.type === 'PC').map(character => (
+                <div key={character.id} className="character-goals">
+                  <h3>{character.name}</h3>
+                  <ul>
+                    {character.goals && character.goals.map((goal, index) => (
+                      <li key={index}>{goal.text} ({goal.points}点)</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
           {!activeContent && (
-            <p>左のボタンを押して、解説や各エンディング、情報カードを確認してください。</p>
+            <p>左のボタンを押して、解説や各エンディング、情報カード、得点計算を確認してください。</p>
           )}
         </div>
       </div>

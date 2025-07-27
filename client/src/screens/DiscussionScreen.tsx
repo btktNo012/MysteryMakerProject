@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Character, InfoCard, Player, DiscussionTimer, ScenarioData, CharacterSelections } from '../types';
 import Timer from '../components/Timer';
 import Modal from '../components/Modal';
@@ -70,7 +70,6 @@ const CharacterListTab: React.FC<{
 };
 
 const DiscussionScreen: React.FC<DiscussionScreenProps> = ({ 
-  title, 
   gamePhase,
   character, 
   tabItems, 
@@ -137,7 +136,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
 
 
   // --- メモ化された計算 ---
-  const { getCardLimit, canGetMoreCards, allTabItems, acquiredCardCount } = useMemo(() => {
+  const { getCardLimit, allTabItems, acquiredCardCount } = useMemo(() => {
     const phaseKey = gamePhase;
     const acquiredCardCount = myPlayer.acquiredCardCount[phaseKey] ?? 0;
     const getCardLimit = scenarioData.discussionPhaseSettings[phaseKey]?.maxCardsPerPlayer ?? 99;
@@ -159,14 +158,6 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   }, [myPlayer, gamePhase, scenarioData, tabItems, players, characterSelections]);
 
   // --- イベントハンドラ ---
-  const handlePauseResume = () => {
-    if (discussionTimer.isTicking) {
-      onPauseTimer();
-    } else {
-      onResumeTimer();
-    }
-  };
-
   const handleCardClick = (card: InfoCard) => {
     if (!card.owner) {
       // サーバー側で上限チェックを行うため、クライアント側では常に取得要求を出す

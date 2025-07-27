@@ -46,6 +46,7 @@ function App() {
   const [isGetCardErrorModalOpen, setIsGetCardErrorModalOpen] = useState(false);
   const [getCardErrorMessage, setGetCardErrorMessage] = useState('');
   const [isConfirmCloseRoomModalOpen, setIsConfirmCloseRoomModalOpen] = useState(false);
+  const [isCharacterSelectConfirmModalOpen, setIsCharacterSelectConfirmModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [characterSelections, setCharacterSelections] = useState<CharacterSelections>({});
@@ -253,7 +254,7 @@ function App() {
       console.log('Disconnecting socket...');
       newSocket.disconnect();
     };
-  }, [username]); // usernameが変更されたときも再接続処理を走らせるため依存配列に含める
+  }, []); // このuseEffectはマウント時に一度だけ実行する
 
   useEffect(() => {
     fetch('/scenario.json')
@@ -317,7 +318,10 @@ function App() {
   }
   const handleStartGame = () => socket?.emit('startGame', { roomId, userId });
   const handleCharacterSelect = (characterId: string | null) => socket?.emit('selectCharacter', { roomId, userId, characterId });
-  const handleCharacterConfirm = () => socket?.emit('confirmCharacters', { roomId, userId });
+  const handleCharacterConfirm = () => {
+    setIsCharacterSelectConfirmModalOpen(false);
+    socket?.emit('confirmCharacters', { roomId, userId })
+  };
   const handleExtendTimer = () => socket?.emit('extendReadingTimer', { roomId, userId });
   const handleProceedToDiscussion = () => socket?.emit('proceedToFirstDiscussion', { roomId, userId });
 
@@ -381,7 +385,7 @@ function App() {
       case 'waiting': return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={maxPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
       case 'schedule': return <InfoDisplayScreen title="進行スケジュール" filePath={scenario!.scheduleFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('synopsis')} />;
       case 'synopsis': return <InfoDisplayScreen title="あらすじ" filePath={scenario!.synopsisFile} onBackFlg={true} onBack={() => setGamePhase('schedule')} onNext={() => setGamePhase('characterSelect')} />;
-      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={handleCharacterConfirm} players={players} />;
+      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={()=>setIsCharacterSelectConfirmModalOpen(true)} players={players} />;
       case 'commonInfo': return (
         <>
           <InfoDisplayScreen title="ハンドアウト読み込み：共通情報" filePath={scenario!.commonInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('individualStory')} />
@@ -488,6 +492,16 @@ function App() {
       {renderScreen()}
 
       <Modal
+        isOpen={isCharacterSelectConfirmModalOpen}
+        message="ハンドアウト読み込み画面に移動しますか？"
+        onConfirm={handleCharacterConfirm}
+        onClose={() => setIsCharacterSelectConfirmModalOpen(false)}
+        confirmButtonText="はい"
+        closeButtonText="いいえ"
+      >
+        <div className='modal-message'>移動すると同時にタイマーが起動します。全員の準備が終わったことを確認してから次へ進んでください。</div>
+      </Modal>
+      <Modal
         isOpen={isHoReadEndModalOpen}
         message={myPlayer?.isMaster ? "第一議論フェイズ画面に移動しますか？" : "ルームマスターが操作中です..."}
         onConfirm={myPlayer?.isMaster ? handleProceedToDiscussion : undefined}
@@ -523,12 +537,14 @@ function App() {
 
       <Modal
         isOpen={isConfirmCloseRoomModalOpen}
-        message="解散するとすべてのメンバーがタイトル画面に移動します。よろしいですか？"
+        message="解散するとすべてのメンバーがタイトル画面に移動します。"
         onConfirm={handleConfirmCloseRoom}
         onClose={() => setIsConfirmCloseRoomModalOpen(false)}
         confirmButtonText="はい"
         closeButtonText="いいえ"
-      />
+      >
+        <div className='modal-message'>よろしいですか？</div>
+      </Modal>
 
       <Modal isOpen={isCreateRoomModalOpen} message="ユーザー名を入力してください" onConfirm={handleCreateRoom} onClose={() => setIsCreateRoomModalOpen(false)} confirmButtonText="作成" closeButtonText="キャンセル">
         <div className="modal-inputs">

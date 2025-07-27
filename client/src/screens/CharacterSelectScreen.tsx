@@ -63,7 +63,8 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
       <h1>キャラクターセレクト</h1>
       <div className="char-select-content">
         <p className="char-select-info">
-          演じるキャラクターを決めてください。
+          演じるキャラクターを決めてください。<br/>
+          次の画面では個別ハンドアウトの読み込みが始まります。キャラクターが確定しましたら通話はミュートにしてください。
         </p>
         <ul className="char-list">
           {playerCharacters.map(char => {

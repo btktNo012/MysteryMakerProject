@@ -13,6 +13,13 @@ const io = new Server(server, {
   }
 });
 
+// --- ログ出力関数 ---
+const log = (message: string, ...args: any[]) => {
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+  console.log(`[${timestamp}] ${message}`, ...args);
+};
+
 // --- 定数 ---
 const READING_TIME_SECONDS = 600; // 10 minutes
 const READING_TIME_SECONDS_EXTENSION = 180; // 3 minutes
@@ -125,7 +132,7 @@ const calculateVoteResult = (room: Room) => {
   // 投票結果確定
   room.voteResult = { votedCharacterId: winners[0], count: maxVotes };
   // gamePhaseはまだ'voting'のまま。クライアントからの要求で'ending'に遷移する
-  console.log(`Room ${room.id}: Vote result is finalized.`);
+  log(`Room ${room.id}: Vote result is finalized.`);
   io.to(room.id).emit('voteResultFinalized', {
     result: room.voteResult,
     votes: room.votes
@@ -135,7 +142,7 @@ const calculateVoteResult = (room: Room) => {
 
 // --- Socket.IO通信ロジック ---
 io.on('connection', (socket: Socket) => {
-  console.log(`A user connected: ${socket.id}`);
+  log(`A user connected: ${socket.id}`);
 
   // ルーム作成
   socket.on('createRoom', ({ username, userId }: { username: string, userId: string }) => {
@@ -165,7 +172,7 @@ io.on('connection', (socket: Socket) => {
     };
     rooms[roomId] = newRoom;
     socket.join(roomId);
-    console.log(`Room created: ${roomId} by ${username} (userId: ${userId})`);
+    log(`Room created: ${roomId} by ${username} (userId: ${userId})`);
     // 接続した本人に、ルーム情報と自身の情報を返す
     socket.emit('roomCreated', { 
       roomId, 
@@ -197,7 +204,7 @@ io.on('connection', (socket: Socket) => {
     if (existingPlayer) {
       existingPlayer.id = socket.id; // Socket IDを更新
       existingPlayer.connected = true;
-      console.log(`Player reconnected: ${username} (userId: ${userId}) in room: ${upperRoomId}`);
+      log(`Player reconnected: ${username} (userId: ${userId}) in room: ${upperRoomId}`);
     } else {
       // 新規プレイヤーの参加
       if (room.players.length >= room.maxPlayers) {
@@ -206,7 +213,7 @@ io.on('connection', (socket: Socket) => {
       }
       const newPlayer: Player = { id: socket.id, userId, name: username, isMaster: false, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 } };
       room.players.push(newPlayer);
-      console.log(`${username} (userId: ${userId}) joined room: ${upperRoomId}`);
+      log(`${username} (userId: ${userId}) joined room: ${upperRoomId}`);
     }
 
     socket.join(upperRoomId);
@@ -237,7 +244,7 @@ io.on('connection', (socket: Socket) => {
     if (room && room.masterUserId === userId) {
       updateRoomActivity(room);
       room.gamePhase = 'schedule';
-      console.log(`Game started in room: ${roomId}. Phase: ${room.gamePhase}`);
+      log(`Game started in room: ${roomId}. Phase: ${room.gamePhase}`);
       io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
     }
   });
@@ -259,14 +266,14 @@ io.on('connection', (socket: Socket) => {
         }
       }
       io.to(roomId).emit('characterSelectionUpdated', currentSelections);
-      console.log(`Room ${roomId}: Character selection cancelled by ${userId}`, currentSelections);
+      log(`Room ${roomId}: Character selection cancelled by ${userId}`, currentSelections);
       return;
     }
 
     // --- 新規選択の場合 ---
     // 既に他の誰かが選択している場合は何もしない
     if (currentSelections[characterId] && currentSelections[characterId] !== userId) {
-      console.log(`Character ${characterId} already selected by another user.`);
+      log(`Character ${characterId} already selected by another user.`);
       return; 
     }
 
@@ -281,7 +288,7 @@ io.on('connection', (socket: Socket) => {
     currentSelections[characterId] = userId;
 
     io.to(roomId).emit('characterSelectionUpdated', currentSelections);
-    console.log(`Room ${roomId}: Character selection updated by ${userId}`, currentSelections);
+    log(`Room ${roomId}: Character selection updated by ${userId}`, currentSelections);
   });
 
   // キャラクター選択確定 (ルームマスターのみ)
@@ -292,7 +299,7 @@ io.on('connection', (socket: Socket) => {
       room.gamePhase = 'commonInfo';
       const endTime = Date.now() + READING_TIME_SECONDS * 1000;
       room.readingTimerEndTime = endTime;
-      console.log(`Characters confirmed in room: ${roomId}. Phase: ${room.gamePhase}`);
+      log(`Characters confirmed in room: ${roomId}. Phase: ${room.gamePhase}`);
       io.to(roomId).emit('charactersConfirmed', { 
         gamePhase: room.gamePhase,
         readingTimerEndTime: endTime 
@@ -307,7 +314,7 @@ io.on('connection', (socket: Socket) => {
       updateRoomActivity(room);
       const newEndTime = room.readingTimerEndTime + READING_TIME_SECONDS_EXTENSION * 1000;
       room.readingTimerEndTime = newEndTime;
-      console.log(`Reading time extended in room: ${roomId}`);
+      log(`Reading time extended in room: ${roomId}`);
       io.to(roomId).emit('readingTimeExtended', { endTime: newEndTime });
     }
   });
@@ -320,7 +327,7 @@ io.on('connection', (socket: Socket) => {
       room.gamePhase = 'firstDiscussion';
       // タイマー情報をリセット
       room.readingTimerEndTime = null; 
-      console.log(`Proceeding to first discussion in room: ${roomId}. Phase: ${room.gamePhase}`);
+      log(`Proceeding to first discussion in room: ${roomId}. Phase: ${room.gamePhase}`);
       io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
     }
   });
@@ -331,7 +338,7 @@ io.on('connection', (socket: Socket) => {
     if (room) {
       updateRoomActivity(room);
       room.gamePhase = newPhase;
-      console.log(`Room ${roomId} phase changed to ${newPhase} by client request.`);
+      log(`Room ${roomId} phase changed to ${newPhase} by client request.`);
       // Note: ここでは他のクライアントにemitしない。リロード時の状態復元のためだけに使う。
     }
   });
@@ -348,7 +355,7 @@ io.on('connection', (socket: Socket) => {
       phase: phase,
       endState: 'none',
     };
-    console.log(`Room ${roomId}: ${phase} timer started.`);
+    log(`Room ${roomId}: ${phase} timer started.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
@@ -362,7 +369,7 @@ io.on('connection', (socket: Socket) => {
     // 残り時間を保持するためにendTimeを更新
     room.discussionTimer.endTime = remainingTime;
 
-    console.log(`Room ${roomId}: Discussion timer paused by ${userId}.`);
+    log(`Room ${roomId}: Discussion timer paused by ${userId}.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
@@ -376,7 +383,7 @@ io.on('connection', (socket: Socket) => {
     room.discussionTimer.isTicking = true;
     room.discussionTimer.endTime = newEndTime;
 
-    console.log(`Room ${roomId}: Discussion timer resumed by ${userId}.`);
+    log(`Room ${roomId}: Discussion timer resumed by ${userId}.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
@@ -387,7 +394,7 @@ io.on('connection', (socket: Socket) => {
     updateRoomActivity(room);
 
     room.discussionTimer.endState = 'requested';
-    console.log(`Room ${roomId}: Master requested to end discussion.`);
+    log(`Room ${roomId}: Master requested to end discussion.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
@@ -398,7 +405,7 @@ io.on('connection', (socket: Socket) => {
     updateRoomActivity(room);
 
     room.discussionTimer.endState = 'none';
-    console.log(`Room ${roomId}: Master canceled to end discussion.`);
+    log(`Room ${roomId}: Master canceled to end discussion.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
   });
 
@@ -416,7 +423,7 @@ io.on('connection', (socket: Socket) => {
     // タイマーリセット
     room.discussionTimer = { endTime: null, isTicking: false, phase: null, endState: 'none' }; 
 
-    console.log(`Room ${roomId}: Discussion ended by master. New phase: ${room.gamePhase}`);
+    log(`Room ${roomId}: Discussion ended by master. New phase: ${room.gamePhase}`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
     io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
   });
@@ -445,7 +452,7 @@ io.on('connection', (socket: Socket) => {
     card.owner = userId;
     player.acquiredCardCount[phaseKey]++; // カウントを増やす
 
-    console.log(`Room ${roomId}: Card "${card.name}" taken by user ${userId}. Count for ${phaseKey}: ${player.acquiredCardCount[phaseKey]}`);
+    log(`Room ${roomId}: Card "${card.name}" taken by user ${userId}. Count for ${phaseKey}: ${player.acquiredCardCount[phaseKey]}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
     // プレイヤー情報も更新されたので通知
     io.to(roomId).emit('updatePlayers', { players: room.players });
@@ -458,7 +465,7 @@ io.on('connection', (socket: Socket) => {
     if (!card || card.owner !== userId) return;
     updateRoomActivity(room);
     card.isPublic = true;
-    console.log(`Room ${roomId}: Card "${card.name}" made public by user ${userId}`);
+    log(`Room ${roomId}: Card "${card.name}" made public by user ${userId}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
     io.to(roomId).emit('updatePlayers', { players: room.players });
   });
@@ -472,7 +479,7 @@ io.on('connection', (socket: Socket) => {
     if (!targetPlayer) return;
     updateRoomActivity(room);
     card.owner = targetUserId;
-    console.log(`Room ${roomId}: Card "${card.name}" transferred from ${userId} to ${targetUserId}`);
+    log(`Room ${roomId}: Card "${card.name}" transferred from ${userId} to ${targetUserId}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
     io.to(roomId).emit('updatePlayers', { players: room.players });
   });
@@ -484,7 +491,7 @@ io.on('connection', (socket: Socket) => {
     updateRoomActivity(room);
 
     room.votes[userId] = votedCharacterId;
-    console.log(`Room ${roomId}: User ${userId} voted for ${votedCharacterId}`);
+    log(`Room ${roomId}: User ${userId} voted for ${votedCharacterId}`);
     io.to(roomId).emit('voteStateUpdated', room.votes);
 
     // 全員投票したかチェック
@@ -494,7 +501,7 @@ io.on('connection', (socket: Socket) => {
     });
 
     if (Object.keys(room.votes).length === pcPlayers.length) {
-      console.log(`Room ${roomId}: All players have voted.`);
+      log(`Room ${roomId}: All players have voted.`);
       calculateVoteResult(room);
     }
   });
@@ -519,7 +526,7 @@ io.on('connection', (socket: Socket) => {
             room.characterSelections[charId] = null;
           }
         }
-        console.log(`Player ${player.name} (userId: ${userId}) left room: ${roomId}`);
+        log(`Player ${player.name} (userId: ${userId}) left room: ${roomId}`);
         io.to(roomId).emit('updatePlayers', { players: room.players, characterSelections: room.characterSelections });
       } else {
         // 既に切断などでプレイヤーリストにいない場合
@@ -532,7 +539,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('closeRoom', ({ roomId, userId }: { roomId: string, userId: string }) => {
     const room = rooms[roomId];
     if (room && room.masterUserId === userId) {
-      console.log(`Room closed by master: ${roomId}`);
+      log(`Room closed by master: ${roomId}`);
       io.to(roomId).emit('roomClosed');
       // TODO: 将来的にはルーム情報をアーカイブするなど、即時削除しない方が良いかもしれない
       delete rooms[roomId];
@@ -541,7 +548,7 @@ io.on('connection', (socket: Socket) => {
 
   // 接続切断
   socket.on('disconnect', () => {
-    console.log(`A user disconnected: ${socket.id}`);
+    log(`A user disconnected: ${socket.id}`);
     let roomToUpdate: Room | undefined;
 
     for (const roomId in rooms) {
@@ -550,13 +557,13 @@ io.on('connection', (socket: Socket) => {
 
       if (player) {
         player.connected = false;
-        console.log(`Player ${player.name} (userId: ${player.userId}) disconnected from room: ${roomId}`);
+        log(`Player ${player.name} (userId: ${player.userId}) disconnected from room: ${roomId}`);
         roomToUpdate = room;
 
         // プレイヤーが全員切断状態かチェック
         const allDisconnected = room.players.every(p => !p.connected);
         if (allDisconnected) {
-          console.log(`All players disconnected in room ${roomId}. Deleting room.`);
+          log(`All players disconnected in room ${roomId}. Deleting room.`);
           delete rooms[roomId];
           roomToUpdate = undefined; // 更新は不要
           break;
@@ -568,10 +575,10 @@ io.on('connection', (socket: Socket) => {
         //   if (newMaster) {
         //     newMaster.isMaster = true;
         //     room.masterUserId = newMaster.userId;
-        //     console.log(`Master disconnected. New master is ${newMaster.name} in room ${roomId}`);
+        //     log(`Master disconnected. New master is ${newMaster.name} in room ${roomId}`);
         //   } else {
         //     // 接続中のプレイヤーが他にいない場合、ルームを削除
-        //     console.log(`Master disconnected and no other players available. Deleting room ${roomId}`);
+        //     log(`Master disconnected and no other players available. Deleting room ${roomId}`);
         //     delete rooms[roomId];
         //     roomToUpdate = undefined; // 更新は不要
         //     break;
@@ -595,7 +602,7 @@ io.on('connection', (socket: Socket) => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  log(`Server running on port ${PORT}`);
 });
 
 // --- サーバーサイドタイマー監視 ---
@@ -605,7 +612,7 @@ setInterval(() => {
     const room = rooms[roomId];
     // タイマーが動作中かつ、終了時刻を過ぎており、まだタイムアップ処理がされていない場合
     if (room.discussionTimer.isTicking && room.discussionTimer.endTime && now >= room.discussionTimer.endTime && room.discussionTimer.endState !== 'timeup') {
-      console.log(`Room ${roomId}: Discussion time is up.`);
+      log(`Room ${roomId}: Discussion time is up.`);
       room.discussionTimer.isTicking = false;
       room.discussionTimer.endState = 'timeup';
       io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
@@ -620,11 +627,11 @@ const ROOM_INACTIVITY_TIMEOUT = 1000 * 60 * 60 * 6; // 6時間
 
 setInterval(() => {
   const now = Date.now();
-  console.log('Running room cleanup job...');
+  log('Running room cleanup job...');
   for (const roomId in rooms) {
     const room = rooms[roomId];
     if (now - room.lastActivityTime > ROOM_INACTIVITY_TIMEOUT) {
-      console.log(`Room ${roomId} is inactive for too long. Deleting.`);
+      log(`Room ${roomId} is inactive for too long. Deleting.`);
       io.to(roomId).emit('roomClosed'); // 接続中のユーザーがいれば通知
       delete rooms[roomId];
     }

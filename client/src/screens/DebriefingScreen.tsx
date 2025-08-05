@@ -1,6 +1,6 @@
 // src/screens/DebriefingScreen.tsx
 import React, { useState } from 'react';
-import { type ScenarioData, type InfoCard, type Player, type Character } from '../types';
+import { type ScenarioData, type InfoCard, type Player} from '../types';
 import TextRenderer from '../components/TextRenderer';
 import StyledButton from '../components/StyledButton';
 import Modal from '../components/Modal';
@@ -21,10 +21,10 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
 
-  const { mainCommentary, characterEndings } = scenario.debriefing;
+  const { mainCommentary, characterInfo } = scenario.debriefing;
   const allContents = [
     { id: 'main', ...mainCommentary },
-    ...characterEndings
+    ...characterInfo
   ];
 
   const handleCommentaryButtonClick = (file: string, id: string) => {
@@ -130,7 +130,7 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
                   <h3>{character.name}</h3>
                   <ul>
                     {character.goals && character.goals.map((goal, index) => (
-                      <li key={index}>{goal.text} ({goal.points}点)</li>
+                      <li key={index}>{goal.text} ({goal.points}点)<ul><li>{goal.judge}</li></ul></li>
                     ))}
                   </ul>
                 </div>
@@ -138,7 +138,7 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
             </div>
           )}
           {!activeContent && (
-            <p>左のボタンを押して、解説や各エンディング、情報カード、得点計算を確認してください。</p>
+            <p>左のボタンを押して、あとがきや各エンディング、情報カード、得点計算を確認してください。</p>
           )}
         </div>
       </div>
@@ -151,7 +151,8 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
           closeButtonText="閉じる"
         >
           <div className="modal-message" style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}>
-            {selectedCard.content}
+            <p className="modal-card-content">{selectedCard.content}</p>
+            {selectedCard.conditionalInfo?.trueInfo && (<p className="modal-card-content card-true-info">{selectedCard.conditionalInfo.trueInfo}</p>)}
           </div>
         </Modal>
       )}

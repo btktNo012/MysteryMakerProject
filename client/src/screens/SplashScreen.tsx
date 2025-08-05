@@ -1,10 +1,10 @@
-// src/screens/AttentionScreen.tsx
+// src/screens/SplashScreen.tsx
 
 import React, { useState, useEffect } from 'react';
-import './AttentionScreen.css';
+import './SplashScreen.css';
 
 // このコンポーネントが受け取るPropsの型定義
-interface AttentionScreenProps {
+interface SplashScreenProps {
   onNext: () => void; // 次の画面（スタート画面）へ遷移するための関数
 }
 
@@ -18,7 +18,7 @@ const HeadphoneIcon = () => (
     />
   );
 
-const AttentionScreen: React.FC<AttentionScreenProps> = ({ onNext }) => {
+const SplashScreen: React.FC<SplashScreenProps> = ({ onNext }) => {
   // フェードアウト用のアニメーションクラスを適用するためのState
   const [isFadingOut, setIsFadingOut] = useState(false);
 
@@ -44,10 +44,10 @@ const AttentionScreen: React.FC<AttentionScreenProps> = ({ onNext }) => {
 
   return (
     // isFadingOutがtrueになったら 'fade-out' クラスを追加する
-    <div className={`attention-container ${isFadingOut ? 'fade-out' : ''}`}>
+    <div className={`splash-container ${isFadingOut ? 'fade-out' : ''}`}>
       <HeadphoneIcon />
     </div>
   );
 };
 
-export default AttentionScreen;
+export default SplashScreen;

@@ -9,18 +9,9 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-}
-
-/* 背景画像の上に半透明の黒いオーバーレイをかける */
-.start-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1;
+    background-color: #fff;
+    width: 1400px;
+    margin: auto;
 }
 
 .start-content {
@@ -31,8 +22,9 @@
 
 .game-title {
     font-size: 3rem;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.7);
     margin-bottom: 40px;
+    color: #333;
 }
 
 .button-group-start {
@@ -53,12 +45,10 @@
     min-width: 220px;
 }
 
-.version-label {
+.start-label {
     position: fixed;
-    right: 10px;
     bottom: 10px;
     font-size: 0.8rem;
-    color: #eee;
+    color: #333;
     z-index: 2;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
 }

@@ -1,40 +1,18 @@
 /* IndividualStoryScreen.css */
 .individual-story-container {
   padding: 20px;
-  max-width: 1200px; /* 左右に並べるので最大幅を広げる */
+  max-width: 1200px;
+  height: 100%;
   margin: auto;
 }
-.individual-story-content{
-  height: 600px;
-  padding: 15px;
-  margin: auto;
-}
-/* Flexboxを使って左右分割のコンテナを作成 */
-.main-content-wrapper {
-  display: flex;
-  gap: 20px; /* 左右エリア間の隙間 */
-}
 
-/* 左側の情報エリア */
-.ho-left-panel {
-  flex: 2; /* 右パネルに対して2倍の幅を取る */
-  min-width: 0; /* flexアイテムが縮小できるようにするため */
-}
-
-/* 右側の地図エリア */
-.ho-right-panel {
-  flex: 1; /* 左パネルに対して1倍の幅を取る */
-  min-width: 0;
-  display: flex;
-  flex-direction: column; /* 地図のタイトルと画像を縦に並べる */
-}
-
-.story-content-area {
-  height: 500px; /* 高さを少し調整 */
+.individual-story-content {
+  width: 100%;
+  height: 600px; /* 高さを少し調整 */
   overflow-y: auto;
-  border: 1px solid #ccc;
   padding: 15px;
-  line-height: 1.6;
+  line-height: 1.8;
+  margin: auto;
 }
 
 .goals-section {
@@ -52,6 +30,7 @@
 .goals-list {
   list-style: none;
   padding-left: 0;
+  white-space: pre-wrap;
 }
 
 .goal-item {
@@ -66,10 +45,13 @@
 }
 
 .map-image {
-  width: 100%;
+  width: 60%;
+  display: block;
+  margin: auto;
   height: auto; /* アスペクト比を維持 */
   border: 1px solid #ccc;
   border-radius: 4px;
+  align-self: center;
 }
 
 /* ナビゲーションボタンエリア */

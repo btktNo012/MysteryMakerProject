@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Character, InfoCard, Player, DiscussionTimer, ScenarioData, CharacterSelections } from '../types';
+import type { Character, InfoCard, Player, DiscussionTimer, ScenarioData, CharacterSelections, GameLogEntry } from '../types';
 import Timer from '../components/Timer';
 import Modal from '../components/Modal';
 import Tabs, { type TabItem } from '../components/Tabs';
@@ -27,7 +27,54 @@ interface DiscussionScreenProps {
   onRequestEnd: () => void; // 強制終了要求
   onCancelEnd: () => void;  // 強制終了キャンセル
   onConfirmEnd: () => void; // 強制終了確定
+  onUseSkill: (skillId: string | null) => void; // スキル使用
+  gameLog: GameLogEntry[];
 }
+
+const evaluateConditions = (card: InfoCard, players: Player[], characterSelections: CharacterSelections): boolean => {
+  if (!card.conditionalInfo) {
+    return true; // 条件がなければ常にtrue
+  }
+
+  const { conditions, andOr } = card.conditionalInfo;
+  if (!conditions || conditions.length === 0) {
+    return true; // 条件が空なら常にtrue
+  }
+
+  const results = conditions.map(condition => {
+    if (condition.type === 'type_owner') {
+      // 'id'で指定されたキャラクターがこのカードを所有しているか
+      const ownerPlayer = players.find(p => p.userId === card.owner);
+      if (!ownerPlayer) return false;
+      const characterId = Object.keys(characterSelections).find(
+        key => characterSelections[key] === ownerPlayer.userId
+      );
+      return characterId === condition.id;
+    } else if (condition.type === 'type_first_ownew') {
+      // 最初の所有者を取得
+      const firstOwnerPlayer = players.find(p => p.userId === card.firstOwner);
+      // 最初の所有者が存在しない場合はfalse
+      if (!firstOwnerPlayer) return false;
+      // キャラクターIDを取得
+      const characterId = Object.keys(characterSelections).find(
+        key => characterSelections[key] === firstOwnerPlayer.userId
+      );
+      // キャラクターIDが一致する場合true
+      return characterId === condition.id;
+    } else if (condition.type === 'type_public') {
+      // 全体に共有されているか
+      return card.isPublic;
+    }
+    return false;
+  });
+
+  if (andOr === 'AND') {
+    return results.every(result => result);
+  } else {
+    return results.some(result => result);
+  }
+};
+
 
 // 新しいコンポーネント
 const CharacterListTab: React.FC<{
@@ -51,15 +98,15 @@ const CharacterListTab: React.FC<{
           <div key={char.id} className="character-item">
             {char.imageFile && <img src={char.imageFile} alt={char.name} className="character-item-image" />}
             <div className="character-item-details">
-            <h4>
-              {char.name}
-              {char.type === 'PC' && (
-                <span style={{ fontSize: '0.9em', color: '#888', marginLeft: '8px' }}>
-                  {playerName || '未選択'}
-                </span>
-              )}
-              <span style={{fontSize: '0.8em', color: '#777'}}>({char.type})</span>
-            </h4>
+              <h4>
+                {char.name}
+                {char.type === 'PC' && (
+                  <span style={{ fontSize: '0.9em', color: '#888', marginLeft: '8px' }}>
+                    {playerName || '未選択'}
+                  </span>
+                )}
+                <span style={{ fontSize: '0.8em', color: '#777' }}>({char.type})</span>
+              </h4>
               <p className="character-profile">{char.profile}</p>
             </div>
           </div>
@@ -69,15 +116,15 @@ const CharacterListTab: React.FC<{
   );
 };
 
-const DiscussionScreen: React.FC<DiscussionScreenProps> = ({ 
+const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   gamePhase,
-  character, 
-  tabItems, 
-  discussionTime, 
-  infoCards, 
+  character,
+  tabItems,
+  discussionTime,
+  infoCards,
   players,
   myPlayer,
-  scenarioData, 
+  scenarioData,
   characterSelections,
   onGetCard,
   onMakeCardPublic,
@@ -88,7 +135,9 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onResumeTimer,
   onRequestEnd,
   onCancelEnd,
-  onConfirmEnd
+  onConfirmEnd,
+  onUseSkill,
+  gameLog
 }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(discussionTime);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
@@ -96,9 +145,18 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isGetCardConfirmModalOpen, setIsGetCardConfirmModalOpen] = useState(false);
   const [cardToGet, setCardToGet] = useState<InfoCard | null>(null);
+  const [isRightPanelWide, setIsRightPanelWide] = useState(false);
 
   const isMaster = myPlayer.isMaster;
   const userId = myPlayer.userId;
+
+  const logContainerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [gameLog]);
 
   // --- タイマーロジック ---
   useEffect(() => {
@@ -146,11 +204,11 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
       ...tabItems,
       {
         label: '登場人物一覧',
-        content: <CharacterListTab 
-                    characters={scenarioData.characters} 
-                    players={players} 
-                    characterSelections={characterSelections} 
-                 />
+        content: <CharacterListTab
+          characters={scenarioData.characters}
+          players={players}
+          characterSelections={characterSelections}
+        />
       }
     ];
 
@@ -160,6 +218,10 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   // --- イベントハンドラ ---
   const handleCardClick = (card: InfoCard) => {
     if (!card.owner) {
+      if (!discussionTimer.endTime) {
+        alert('議論が開始されるまで取得できません！');
+        return;
+      }
       // サーバー側で上限チェックを行うため、クライアント側では常に取得要求を出す
       setCardToGet(card);
       setIsGetCardConfirmModalOpen(true);
@@ -169,11 +231,15 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
     }
   };
 
+  // 情報カード取得イベントハンドラ
   const handleConfirmGetCard = () => {
     if (cardToGet) {
+      // サーバーにカード取得要求を送信
       onGetCard(cardToGet.id);
     }
+    // モーダルを閉じる
     setIsGetCardConfirmModalOpen(false);
+    // 参照中のカードをリセット
     setCardToGet(null);
   }
 
@@ -190,13 +256,13 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   }
 
   const handleTransferClick = () => {
-    if(selectedCard){
+    if (selectedCard) {
       setIsTransferModalOpen(true);
     }
   }
 
   const handleTransferConfirm = (targetUserId: string) => {
-    if(selectedCard){
+    if (selectedCard) {
       onTransferCard(selectedCard.id, targetUserId);
       setIsTransferModalOpen(false);
       closeCardDetailModal();
@@ -222,94 +288,131 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
     <div className="discussion-screen">
       <div className="discussion-left-panel">
         <div className="character-info-discussion">
-            <h3>{character.name}</h3>
-            <div className="goals-section">
-                <h4>あなたの目的</h4>
-                {character.goals && character.goals.length > 0 ? (
-                <ul>
-                    {character.goals.map((goal, index) => (
-                    <li key={index}>{goal.text} ({goal.points}点)</li>
-                    ))}
-                </ul>
-                ) : <p>目的はありません。</p>}
-            </div>
+          <h3>{character.name}</h3>
         </div>
-        <div className="info-cards-section">
-            <div className="info-cards-header">
-                <h4>情報カード</h4>
-                <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
-            </div>
-            <div className="discussion-info-cards-list">
-              {infoCards.map(card => {
-                const ownerName = getOwnerDisplayName(card.owner);
-                let cardClassName = 'info-card';
-                if (card.isPublic) {
-                  cardClassName += ' public';
-                } else if (card.owner === userId) {
-                  cardClassName += ' owned-by-me';
-                } else if (card.owner) {
-                  cardClassName += ' owned-by-other';
-                }
-
-                return (
-                  <div 
-                    key={card.id} 
-                    className={cardClassName}
-                    onClick={() => handleCardClick(card)}
-                  >
-                    {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
-                    <div className="info-card-name">{card.name}</div>
-                    <div className="info-card-owner">所有者: {ownerName}</div>
-                    {card.owner && (
-                      <div className={`info-card-status ${card.isPublic ? 'public' : 'private'}`}>
-                        {card.isPublic ? '全体公開' : '非公開'}
-                      </div>
-                    )}
+        {myPlayer.skills && myPlayer.skills.length > 0 && (
+          <div className="skills-section">
+            <h4>スキル</h4>
+            <ul className="skills-list">
+              {myPlayer.skills.map((skill, index) => (
+                <li key={index} className={`skill-type-${skill.type}`}>
+                  <div className='skill-text'>
+                    <div className='skill-name'>{skill.name}</div>
+                    <div className='skill-description'>{skill.description}</div>
                   </div>
-                )
-              })}
-            </div>
+                  {skill.type === 'active' &&
+                    <button
+                      className={`skill-activation-button ${skill.used ? 'used' : ''}`}
+                      onClick={() => discussionTimer.endTime && !skill.used && onUseSkill(skill.id)}
+                      disabled={skill.used}
+                    >
+                      {skill.used ? '使用済' : '使用する'}
+                    </button>}
+                </li>
+              ))}
+            </ul>
+          </div>)}
+        <div className="info-cards-section">
+          <div className="info-cards-header">
+            <h4>情報カード</h4>
+            <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
           </div>
+          <div className="discussion-info-cards-list">
+            {infoCards.map(card => {
+              const ownerName = getOwnerDisplayName(card.owner);
+              let cardClassName = 'info-card';
+              if (card.isPublic) {
+                cardClassName += ' public';
+              } else if (card.owner === userId) {
+                cardClassName += ' owned-by-me';
+              } else if (card.owner) {
+                cardClassName += ' owned-by-other';
+              }
+
+              return (
+                <div
+                  key={card.id}
+                  className={cardClassName}
+                  onClick={() => handleCardClick(card)}
+                >
+                  {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
+                  <div className="info-card-name">{card.name}</div>
+                  <div className="info-card-owner">所有者: {ownerName}</div>
+                  {card.owner && (
+                    <div className={`info-card-status ${card.isPublic ? 'public' : 'private'}`}>
+                      {card.isPublic ? '全体公開' : '非公開'}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <div className="game-log-section">
+          <div className="game-log-content" ref={logContainerRef}>
+            {gameLog.map((log, index) => (
+              <div key={index} className={`log-entry log-type-${log.type}`}>{log.message}</div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="discussion-right-panel">
+      <div className={`discussion-right-panel${isRightPanelWide ? ' wide' : ''}`}>
+        {/* 幅切り替えボタン */}
+        <button
+          className="right-panel-toggle-tab"
+          onClick={() => setIsRightPanelWide(w => !w)}
+          aria-label={isRightPanelWide ? '縮小' : '拡大'}
+        >
+          {isRightPanelWide ? '＞' : '＜'}
+        </button>
+        <div className="goals-section">
+          <h4>あなたの目的</h4>
+          {character.goals && character.goals.length > 0 ? (
+            <ul>
+              {character.goals.map((goal, index) => (
+                <li key={index}>{goal.text} ({goal.points}点)<ul><li>{goal.hint}</li></ul></li>
+              ))}
+            </ul>
+          ) : <p>目的はありません。</p>}
+        </div>
         <div className="main-content">
-            <Tabs items={allTabItems} />
+          <Tabs items={allTabItems} />
         </div>
         <div className="discussion-footer">
-            <div className="timer-wrapper">
-                <Timer 
-                    initialSeconds={remainingSeconds}
-                    isTicking={discussionTimer.isTicking}
-                    onTimeUp={() => {}} // サーバー側で処理
-                />
-            </div>
-            <div className="buttons-wrapper">
+          <div className="timer-wrapper">
+            <Timer
+              initialSeconds={remainingSeconds}
+              isTicking={discussionTimer.isTicking}
+              onTimeUp={() => { }} // サーバー側で処理
+            />
+          </div>
+          <div className="buttons-wrapper">
+            {discussionTimer.endTime && (
+              <>
+                {discussionTimer.isTicking ? (
+                  <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
+                ) : (
+                  <StyledButton onClick={onResumeTimer}>再開</StyledButton>
+                )}
+              </>
+            )}
+            {isMaster && (
+              <>
+                {!discussionTimer.endTime && (
+                  <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
+                )}
                 {discussionTimer.endTime && (
-                    <>
-                        {discussionTimer.isTicking ? (
-                            <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
-                        ) : (
-                            <StyledButton onClick={onResumeTimer}>再開</StyledButton>
-                        )}
-                    </>
+                  <StyledButton onClick={onRequestEnd} style={{ backgroundColor: '#f44336' }}>
+                    議論強制終了
+                  </StyledButton>
                 )}
-                {isMaster && (
-                    <>
-                        {!discussionTimer.endTime && (
-                            <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
-                        )}
-                        {discussionTimer.endTime && (
-                            <StyledButton onClick={onRequestEnd} style={{backgroundColor: '#f44336'}}>
-                                議論強制終了
-                            </StyledButton>
-                        )}
-                    </>
-                )}
-            </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-      
+
       <Modal
         isOpen={isGetCardConfirmModalOpen}
         message={`情報カード「${cardToGet?.name}」を取得しますか？`}
@@ -327,7 +430,12 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
           closeButtonText="閉じる"
         >
           <div className="modal-message">
-            <p>{selectedCard.content}</p>
+            <p className="modal-card-content">{selectedCard.content}</p>
+            {selectedCard.conditionalInfo && (
+              evaluateConditions(selectedCard, players, characterSelections) ?
+                selectedCard.conditionalInfo.trueInfo && (<p className="modal-card-content card-true-info">{selectedCard.conditionalInfo.trueInfo}</p>)
+                : selectedCard.conditionalInfo.falseInfo && (<p className="modal-card-content card-false-info">{selectedCard.conditionalInfo.falseInfo}</p>)
+            )}
             {selectedCard.owner === userId && (
               <div className="card-actions">
                 {!selectedCard.isPublic && (
@@ -341,7 +449,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
       )}
 
       {selectedCard && (
-         <Modal
+        <Modal
           isOpen={isTransferModalOpen}
           message={`「${selectedCard.name}」を誰に渡しますか？`}
           onClose={() => setIsTransferModalOpen(false)}

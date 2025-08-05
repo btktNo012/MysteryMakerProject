@@ -61,8 +61,6 @@ const TextRenderer: React.FC<TextRendererProps> = ({ filePath }) => {
   }
 
   // 改行を<br>に変換し、HTMLとして解釈させる
-  // 注意: この方法は、信頼できるソースからのコンテンツにのみ使用してください。
-  // 今回は自前で用意したテキストファイルなので安全です。
   const createMarkup = () => {
     const formattedContent = content.replace(/\n/g, '<br />');
     return { __html: formattedContent };

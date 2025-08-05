@@ -4,17 +4,15 @@
     display: flex;
     height: 100vh;
     overflow: hidden;
+    position: relative;
 }
 
 .discussion-left-panel {
+    width: 68%;
     padding: 20px;
-    border-right: 1px solid #ccc;
     display: flex;
     flex-direction: column;
-}
-
-.character-info-discussion {
-    margin-bottom: 20px;
+    z-index: 1;
 }
 
 .character-info-discussion h3 {
@@ -23,14 +21,78 @@
     padding-bottom: 10px;
 }
 
-.goals-section {
-    margin-bottom: 20px;
-}
-
 .info-cards-section {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    /* flexアイテムの縮小を許可 */
+}
+
+.game-log-section {
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* flexアイテムの縮小を許可 */
+    height: 180px;
+    /* または適切な高さ */
+}
+
+.game-log-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* 議論フェイズ開始 */
+.log-type-phase-start {
+    background-color: #e8eaf6;
+    /* 薄い藍色 */
+    color: #3f51b5;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #c5cae9;
+}
+
+/* カード取得 */
+.log-type-card-get {
+    background-color: #e8f5e9;
+    /* 薄い緑 */
+    color: #2e7d32;
+}
+
+/* カード公開 */
+.log-type-card-public {
+    background-color: #e3f2fd;
+    /* 薄い青 */
+    color: #1565c0;
+    font-style: italic;
+}
+
+/* カード譲渡 */
+.log-type-card-transfer {
+    background-color: #f3e5f5;
+    /* 薄い紫 */
+    color: #6a1b9a;
+}
+
+/* スキル使用 */
+.log-type-skill-use {
+    background-color: #fff3e0;
+    /* 薄いオレンジ */
+    color: #e65100;
+    font-weight: bold;
+    border: 1px solid #ffe0b2;
 }
 
 .info-cards-header {
@@ -47,7 +109,8 @@
     padding: 10px;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 2%; /* カード間のスペース */
+    gap: 10px 2%;
+    /* カード間のスペース */
     max-height: 80%;
 }
 
@@ -58,7 +121,8 @@
     padding: 10px;
     cursor: pointer;
     transition: background-color 0.2s;
-    width: 23.5%; /* カードの幅を調整 */
+    width: 23.5%;
+    /* カードの幅を調整 */
     min-height: 100px;
     box-sizing: border-box;
     display: flex;
@@ -71,15 +135,18 @@
 }
 
 .info-card.owned-by-me {
-    border-left: 5px solid #4CAF50; /* 緑 */
+    border-left: 5px solid #4CAF50;
+    /* 緑 */
 }
 
 .info-card.owned-by-other {
-    border-left: 5px solid #FFC107; /* 黄 */
+    border-left: 5px solid #FFC107;
+    /* 黄 */
 }
 
 .info-card.public {
-    border-left: 5px solid #2196F3; /* 青 */
+    border-left: 5px solid #2196F3;
+    /* 青 */
 }
 
 
@@ -100,7 +167,8 @@
 .info-card-owner {
     font-size: 0.8em;
     color: #666;
-    margin-top: auto; /* 下に配置 */
+    margin-top: auto;
+    /* 下に配置 */
 }
 
 .info-card-status {
@@ -123,9 +191,58 @@
 }
 
 .discussion-right-panel {
-    width: 50%;
+    position: absolute;
+    background-color: #242424;
+    border-left: 1px solid #ccc;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 30%;
     display: flex;
     flex-direction: column;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    /* left-panelより上に */
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+}
+
+.discussion-right-panel.wide {
+    width: 80%;
+}
+
+.right-panel-toggle-tab {
+    position: absolute;
+    left: -31px;
+    /* パネルの外側にタブが出るように調整 */
+    top: 0px;
+    width: 30px;
+    height: 100px;
+    background: #888;
+    color: #fff;
+    border-color: #666;
+    border-radius: 0px 0 0 12px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    z-index: 20;
+    transition: background 0.2s;
+    padding: 0;
+    outline: none;
+}
+
+.right-panel-toggle-tab:hover {
+    background: #666;
+    border-color: #666;
+    outline: none;
+}
+
+.right-panel-toggle-tab:focus {
+    background: #888;
+    border-color: #666;
+    outline: none;
 }
 
 .main-content {
@@ -134,9 +251,7 @@
     overflow-y: auto;
     display: flex;
 }
-.tab-panel {
-    height: 80%;
-}
+
 .discussion-footer {
     padding: 10px 20px;
     background-color: #fff;
@@ -146,8 +261,9 @@
     align-items: center;
     gap: 20px;
 }
+
 .card-actions {
-    display:inline-flex;
+    display: inline-flex;
     gap: 15px;
 }
 
@@ -182,13 +298,136 @@
 }
 
 .character-profile {
-    white-space: pre-wrap; /* 改行を反映させる */
+    white-space: pre-wrap;
+    /* 改行を反映させる */
 }
+
 .transfer-player-list {
     display: inline-flex;
     gap: 10px;
 }
-.buttons-wrapper{
+
+.buttons-wrapper {
     display: flex;
     gap: 10px;
+}
+
+/* --- skills-list --- */
+.skills-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* --- skill-type-passive --- */
+.skill-type-passive {
+    background: #e0f7e9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #b2dfdb;
+}
+
+/* --- skill-type-active --- */
+.skill-type-active {
+    display: flex;
+    background: #e3f0fb;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #90caf9;
+}
+
+/* --- skill-name --- */
+.skill-name {
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 4px;
+}
+
+/* --- skill-description --- */
+.skill-description {
+    color: #444;
+    margin-bottom: 6px;
+}
+
+/* --- skill-activation --- */
+.skill-activation {
+    display: flex;
+    align-items: center;
+    /* 上下中央揃え */
+    justify-content: center;
+    /* 左右中央揃え */
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.95em;
+    margin-top: 4px;
+    border: 1px solid #bbb;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-left: auto;
+    /* 親がdisplay:flexの時、右端に寄せる */
+}
+
+/* --- activation --- */
+.skill-activation-button {
+    margin-left: auto;
+    /* 右端に寄せる */
+    display: flex;
+    align-items: center;
+    /* 上下中央揃え */
+    justify-content: center;
+    /* 左右中央揃え */
+    min-width: 90px;
+    /* 必要に応じて幅調整 */
+    height: 36px;
+    /* 必要に応じて高さ調整 */
+    border-radius: 6px;
+    background: #fff;
+    color: #222;
+    border: 1px solid #bbb;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 1em;
+    padding: 0 16px;
+}
+
+.skill-activation-button:hover {
+    background: #f0f0f0;
+}
+
+.skill-activation-button:active {
+    background: #e0e0e0;
+}
+
+/* --- activation-used --- */
+.skill-activation-button.used {
+    background-color: #ccc;
+    cursor: not-allowed;
+    color: #666;
+}
+
+/* カード詳細モーダルの内容 */
+.modal-card-content {
+    white-space: pre-wrap;
+    text-align: left;
+    line-height: 2.0;
+}
+
+.card-true-info {
+    color: green;
+    transform: skewX(-10deg);
+    text-align: left;
+    font-style: italic;
+}
+
+.card-false-info {
+    color: red;
+    transform: skewX(-10deg);
+    text-align: left;
+    font-style: italic;
+}
+
+.discuttion-map-image {
+    width: 100%;
 }

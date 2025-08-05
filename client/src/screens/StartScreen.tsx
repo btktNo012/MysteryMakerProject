@@ -3,7 +3,8 @@
 import React from 'react';
 import StyledButton from '../components/StyledButton'; // 共通ボタンをインポート
 import './StartScreen.css';
-import { APP_VERSION } from '../version'; // アプリのバージョンをインポート
+import { APP_COPYRIGHT } from '../copyright';
+import { APP_VERSION } from '../version';
 
 // このコンポーネントが受け取るPropsの型定義
 interface StartScreenProps {
@@ -16,7 +17,7 @@ interface StartScreenProps {
 
 const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRoom, onFindRoom, onExpMurder }) => {
   const containerStyle = {
-    backgroundImage: titleImage ? `url(${titleImage})` : 'none',
+    backgroundImage: titleImage ? `url(${titleImage})` : 'none'
   };
 
   return (
@@ -37,8 +38,9 @@ const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRo
           </StyledButton>
         </div>
       </div>
-      <div className="version-label">
-        version : {APP_VERSION} 
+      <div className="start-label">
+        <p>version : {APP_VERSION}</p>
+        <p>{APP_COPYRIGHT}</p>
       </div>
     </div>
   );

@@ -41,7 +41,7 @@
   border-top: none;
   background-color: #000;
   /* パネルの高さを確保し、スクロール可能にする */
-  height: 450px;
+  height: 80%;
   overflow-y: auto;
   line-height: 1.6;
 }

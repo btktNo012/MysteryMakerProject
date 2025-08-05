@@ -1,0 +1,68 @@
+ /* スキル使用中のオーバーレイ背景 */
+ .skill-overlay {
+     position: fixed;
+     /* 画面全体を覆う */
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background-color: rgba(0, 0, 0, 0.8);
+     /* 半透明の黒 */
+     z-index: 1000;
+     /* 他の要素より必ず手前に表示 */
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     padding: 20px;
+     box-sizing: border-box;
+ }
+
+ /* オーバーレイ内のコンテンツをまとめるコンテナ */
+ .skill-overlay-content {
+     text-align: center;
+     max-width: 90%;
+ }
+
+ /* ユーザーへの案内テキスト */
+ .skill-guide-text {
+     color: white;
+     font-size: 1.5em;
+     font-weight: bold;
+     margin-bottom: 30px;
+     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+ }
+
+ /* ハイライトされるカードを並べるためのコンテナ */
+ .highlighted-cards-container {
+     display: flex;
+     flex-wrap: wrap;
+     /* カードが多ければ折り返す */
+     justify-content: center;
+     gap: 20px;
+     /* カード間の隙間 */
+ }
+
+ /* ハイライトされる個々のカード */
+ .highlighted-card {
+     background-color: #ffffff;
+     color: #333;
+     padding: 20px;
+     border-radius: 8px;
+     border: 3px solid #ffc107;
+     /* 強調用の黄色いボーダー */
+     box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+     cursor: pointer;
+     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+     min-width: 150px;
+ }
+
+ .highlighted-card:hover {
+     transform: translateY(-5px) scale(1.05);
+     /* ホバー時に少し浮き上がって拡大 */
+     box-shadow: 0 10px 25px rgba(255, 255, 255, 0.5);
+ }
+
+ .highlighted-card-name {
+     font-size: 1.1em;
+     font-weight: bold;
+ }

@@ -20,10 +20,9 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
   return (
     <div className="individual-story-container">
       <h1>ハンドアウト読み込み：個別ストーリー【{character.name}】</h1>
-      
+
       <div className="individual-story-content">
         <div className="main-content-wrapper">
-          <div className="ho-left-panel">
             <div className="story-content-area">
               <TextRenderer filePath={character.storyFile} />
               {character.goals && character.goals.length > 0 && (
@@ -33,24 +32,37 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
                     {character.goals.map((goal, index) => (
                       <li key={index} className="goal-item">
                         {goal.text} ({goal.points}点)
+                        <ul><li>{goal.hint}</li></ul>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-            </div>
-          </div>
 
-          <div className="ho-right-panel">
-            <h2 className="map-title">現場見取り図</h2>
-            {character.mapImageFile && (
-              <img 
-                src={character.mapImageFile} 
-                alt="現場見取り図" 
-                className="map-image"
-              />
-            )}
-          </div>
+              <h4 className="map-title">現場見取り図</h4>
+              {character.mapImageFile && (
+                <img
+                  src={character.mapImageFile}
+                  alt="現場見取り図"
+                  className="map-image"
+                />
+              )}
+              {character.skills && character.skills.length > 0 && (
+                <div className="skills-section">
+                  <h4>スキル</h4>
+                  <div>あなたのキャラクターには、固有のスキルが設定されています。目標を達成したり真実を追求するのに活用していきましょう</div>
+                  <ul className="skills-list">
+                    {character.skills.map((skill, index) => (
+                      <li key={index} className={`skill-type-${skill.type}`}>
+                        <div className='skill-text'>
+                          <div className='skill-name'>{skill.name}</div>
+                          <div className='skill-description'>{skill.description}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>)}
+            </div>
         </div>
         <div className='note'>※ハンドアウトの内容は議論フェイズでも確認できます</div>
       </div>

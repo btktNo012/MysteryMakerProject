@@ -1,7 +1,7 @@
 {
-  "title": "まどろみの館殺人事件",
-  "titleImage": "/images/icon_mmp.png",
-  "scheduleFile": "/data/schedule.txt",
+  "title": "久霊武山の一夜",
+  "titleImage": "",
+  "introductionFile": "/data/introduction.txt",
   "synopsisFile": "/data/synopsis.txt",
   "commonInfo": {
     "textFile": "/data/common_info.txt"
@@ -9,180 +9,348 @@
   "intermediateInfo": {
     "textFile": "/data/intermediate_info.txt"
   },
+  "handOutSettings": {
+    "timeLimit": 900
+  },
   "discussionPhaseSettings": {
+    "howto": "/data/how_to_discussion.txt",
     "firstDiscussion": {
-      "maxCardsPerPlayer": 2
+      "maxCardsPerPlayer": 2,
+      "timeLimit": 900
     },
     "secondDiscussion": {
-      "maxCardsPerPlayer": 1
+      "maxCardsPerPlayer": 3,
+      "timeLimit": 900
     }
   },
-  "infoCards": [
-    {
-      "id": "card_01",
-      "name": "書斎の鍵",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者の書斎の机の引き出しから、鍵が見つかった。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_02",
-      "name": "破れた手紙",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "ゴミ箱から、破られた手紙の切れ端が見つかった。『…許さない…』という文字が読み取れる。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_03",
-      "name": "謎の薬品",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "キッチンの棚の奥から、ラベルのない小瓶が見つかった。中には無色透明の液体が入っている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_04",
-      "name": "被害者の写真",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者が若い頃の写真が、リビングの壁に飾られていた。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_05",
-      "name": "洋館の地図",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "洋館の各部屋の配置図が描かれた地図。重要な場所がマークされている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_06",
-      "name": "被害者の遺言書",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者が書いた遺言書。財産の分配について記されている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_07",
-      "name": "謎のメモ",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者の机の上に置かれていたメモ。『真実は一つ』とだけ書かれている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_08",
-      "name": "被害者の携帯電話",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者の携帯電話が、リビングのテーブルの上に置かれていた。ロックがかかっている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_09",
-      "name": "血痕のついたハンカチ",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者の血痕がついたハンカチが、廊下の隅に落ちていた。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_10",
-      "name": "謎の鍵束",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "複数の鍵が束ねられたもの。どの鍵がどの扉に対応するかは不明。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_11",
-      "name": "被害者の時計",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者が愛用していた時計。時間は止まっている。",
-      "owner": null,
-      "isPublic": false
-    },
-    {
-      "id": "card_12",
-      "name": "謎の指輪",
-      "iconFile": "/images/icon_mmp.png",
-      "content": "被害者の指から外れた指輪。宝石が一つ欠けている。",
-      "owner": null,
-      "isPublic": false
-    }
-  ],
   "characters": [
     {
       "id": "char_01",
-      "name": "速水 響",
+      "name": "菱利 聖子",
       "type": "PC",
-      "profile": "28歳・男性。鋭い観察眼を持つ私立探偵。",
-      "imageFile": "/images/icon_mmp.png",
-      "storyFile": "/data/char_01_story.txt",
+      "profile": "28歳。山に慣れた様子の女性",
+      "imageFile": "",
+      "storyFile": "./data/char_01_story.txt",
       "mapImageFile": "/images/map_common.png",
+      "skills": [
+        {
+          "name": "[アクティブ]見通す",
+          "id": "skill_02",
+          "type": "active",
+          "description": "自分以外が持っている非公開状態の情報カードを公開状態にできる",
+          "activation": false
+        }
+      ],
       "goals": [
-        { "text": "事件の犯人を見つけ出す。", "points": 30 },
-        { "text": "自分の過去の秘密を守り通す。", "points": 10 }
+        {
+          "text": "投票で最多得票者にならない。",
+          "hint": "蹴泥を殴るのに使った懐中電灯にはカバーを取り付けたので一見すると撲殺に使えるとは思わないだろう。\nしかし登山道具の知識が豊富な人間が手に取ればバレてしまうかもしれない、そうすれば殴打の跡がついたことにも気付かれるだろう。\n怪しまれるのを承知で自分の荷物を確保して渡さないようにするか、懐中電灯のことがバレた時の言い訳を考えるかしたほうがいいだろう",
+          "points": 7,
+          "judge" : "投票で最多得票者にならなければ達成"
+        },
+        {
+          "text": "蹴泥が迷惑登山者である証拠を見つける",
+          "hint": "蹴泥が兄の死の原因であるのは間違いないが、それを裏付ける証拠があるのなら見つけたい。\n自分自身で手に入れるか、見せてもらうことができればいいだろう",
+          "points": 3,
+          "judge" : "「山小屋の宿帳①」「山のパトロール隊の日誌①」「山小屋の備品棚①」を所持している、または全体公開されていれば達成"
+        }
       ]
     },
     {
       "id": "char_02",
-      "name": "一条 麗奈",
+      "name": "幸原 剣一",
       "type": "PC",
-      "profile": "22歳・女性。資産家の令嬢で、被害者の婚約者。",
-      "imageFile": "/images/icon_mmp.png",
-      "storyFile": "/data/char_02_story.txt",
-      "mapImageFile": "/images/map_char_02_secret.png",
+      "profile": "27歳。面倒見のいい男性",
+      "imageFile": "",
+      "storyFile": "./data/char_02_story.txt",
+      "mapImageFile": "/images/map_common.png",
+      "skills": [
+        {
+          "name": "[アクティブ]交渉",
+          "id": "skill_01",
+          "type": "active",
+          "description": "他のプレイヤーが持つ情報カードを一度だけ自分のものにできる",
+          "activation": false
+        }
+      ],
       "goals": [
-        { "text": "自分が犯人だと疑われない。", "points": 20 },
-        { "text": "被害者との間にあった隠し事を誰にも知られない。", "points": 20 }
+        {
+          "text": "この事件の犯人を最多得票者にする",
+          "hint": "昨晩の室温は確かに低かったが、与えられた装備を正しく使っていれば凍死を免れたはずだ。\n何者かの手で殺されたのだとしたら明らかにしなければならない",
+          "points": 6,
+          "judge" : "菱利 聖子が最多得票者になれば達成"
+        },
+        {
+          "text": "パトロール隊の友人が活動していた証拠を手に入れる",
+          "hint": "2024年12月14日に活動していたパトロール日誌が手に入れば無実の証明になるはずだ",
+          "points": 4,
+          "judge" : "「山のパトロール隊の日誌②」を所持していれば達成"
+        }
       ]
     },
     {
       "id": "char_03",
-      "name": "神崎 譲二",
+      "name": "寺木 士郎",
       "type": "PC",
-      "profile": "45歳・男性。被害者のビジネスパートナー。",
-      "imageFile": "/images/icon_mmp.png",
+      "profile": "32歳。荒っぽい性格だが山に対する敬意は誰よりも強い男性",
+      "imageFile": "",
       "storyFile": "./data/char_03_story.txt",
       "mapImageFile": "/images/map_common.png",
+      "skills": [
+        {
+          "name": "[パッシブ]登山道具の知識",
+          "id": null,
+          "type": "passive",
+          "description": "登山道具を所持するとその詳細を知ることができる（他人が所持しているものに対しては、全体公開されていても効果なし）",
+          "activation": false
+        }
+      ],
       "goals": [
-        { "text": "事件の犯人を見つけ出す。", "points": 20 },
-        { "text": "被害者と共謀して公金横領をしていた事実を隠し通す", "points": 30 }
+        {
+          "text": "投票で最多得票者にならない。",
+          "hint": "確かに蹴泥と争いになって彼を突き飛ばしたが、あれが原因で死んだとはやはり考えにくい。犯人扱いはゴメンだ",
+          "points": 8,
+          "judge" : "投票で最多得票者にならなければ達成"
+        },
+        {
+          "text": "被害者を突き飛ばしていたことを知られない。",
+          "hint": "蹴泥を突き飛ばしたこと自体、知られるとまずいだろう。できれば隠し通しておきたい",
+          "points": 2,
+          "judge" : "幸原 剣一のプレイヤーに知られていなければ達成"
+        }
       ]
     },
     {
       "id": "npc_victim",
-      "name": "西園寺 剛",
+      "name": "蹴泥 敦梧",
       "type": "NPC",
-      "profile": "55歳・男性。この洋館の主。自室で殺害された。",
-      "imageFile": "/images/icon_mmp.png"
+      "profile": "27歳。装備も態度も軽薄な男性。死体となって発見される",
+      "imageFile": ""
+    }
+  ],
+  "infoCards": [
+    {
+      "id": "card_01",
+      "name": "死体の状況①",
+      "iconFile": "",
+      "content": "前頭部に強く打ち付けた跡が見られる",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_02",
+      "name": "死体の状況②",
+      "iconFile": "",
+      "content": "身にまとっている断熱シートとブランケットは、体の上に覆いかぶさっているだけの状態だ。\nこれでは体温を保てずに低体温症に至る可能性が高い",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_03",
+      "name": "菱利の荷物①",
+      "iconFile": "",
+      "content": "懐中電灯。登山の明かりはヘッドランプが基本だが、予備として持っていく人も多い。アウトドア用の高ルーメンのものだ",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木の登山道具の知識によると、この懐中電灯はヘッド部分がカバーになっていて取り外すとステンレス製の突起が露出し、護身用の武器にもなるようだ。\n取り外してよく見ると何かに叩きつけた跡がある",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_04",
+      "name": "菱利の荷物②",
+      "iconFile": "",
+      "content": "登山用のピッケル。どこにも殴ったような跡は見られない",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木の登山道具の知識によると、だいぶ昔に生産終了になったモデルのもの。\nしかし手入れが行き届いているため、まだまだ使っていけそうだ",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_05",
+      "name": "幸原の荷物①",
+      "iconFile": "",
+      "content": "登山用の救急セット。山では不注意から怪我をすることも珍しくないため、登山の必須アイテムとなる",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木の登山道具の知識によると、救急セットの中身だけその他の装備と比べて充実しているようだ",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_06",
+      "name": "幸原の荷物②",
+      "iconFile": "",
+      "content": "登山用のバックパック。中には登山装備一式が入っている",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木の登山道具の知識によると、つい最近発売された最新モデルのもの",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_07",
+      "name": "寺木の荷物①",
+      "iconFile": "",
+      "content": "登山用のバックパック。肩紐のあたりが少し破れている",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木によると、不測の事態に備えていつも消耗品や着替えの類は多めに持ってきているらしい",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_08",
+      "name": "寺木の荷物②",
+      "iconFile": "",
+      "content": "登山用のピッケル。どこにも殴ったような跡は見られない",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false,
+      "conditionalInfo": {
+        "conditions": [
+          {
+            "type": "type_owner",
+            "id": "char_03"
+          }
+        ],
+        "andOr": "AND",
+        "trueInfo": "寺木の自宅には用途ごとに様々なピッケルが置いてあるらしい",
+        "falseInfo": ""
+      }
+    },
+    {
+      "id": "card_09",
+      "name": "蹴泥の荷物",
+      "iconFile": "",
+      "content": "登山装備としては不足している。衣類の素材は登山向けのものでなく、替えもない",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_10",
+      "name": "山小屋の宿帳①",
+      "iconFile": "",
+      "content": "過去の利用者が記念に書いたらしい書き込み。\n「準備万端！いざ山頂へ！2018年12月18日 勇羽」",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_11",
+      "name": "山小屋の宿帳②",
+      "iconFile": "",
+      "content": "熊のイラストの下にギザギザのフキダシで「クマに注意！」と書かれている。\n過去の登山者が描いたらしい",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_12",
+      "name": "山のパトロール隊の日誌①",
+      "iconFile": "",
+      "content": "「2018年12月19日 以前迷惑登山客として共有されていた蹴泥 逸茂という人物の特徴に一致していたため呼び止めると逃げ出した。下手に追っては事故のもとになるため、追及は断念」",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_13",
+      "name": "山のパトロール隊の日誌②",
+      "iconFile": "",
+      "content": "パトロール隊のその日の活動内容が細かく記載されている。\n「2024年12月14日 本来の担当者に代わり 甲野 和城」",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_14",
+      "name": "山小屋の備品棚①",
+      "iconFile": "",
+      "content": "新聞のスクラップブックの記事。\n「2018年12月21日 3日前から久霊武山で行方不明となっていた男性を発見するも、その後死亡を確認。当日の久霊武山は猛吹雪に見舞われており、それが原因で遭難したものと思われる。\n男性の所持品は登山の装備にしてはあまりに不足していたという。山の険しさに見合わない軽装で登山する迷惑登山者は年々増加しており、無計画な登山からこのような悲しい事故が起こるのは残念でならない」\n\n新聞記事に対してさらに書き足しがされている。\n\n「あの日吹雪になる前に彼を見かけたが装備は十分だったはず」\n「警察は思い違いだと言って取り合ってくれない」",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
+    },
+    {
+      "id": "card_15",
+      "name": "山小屋の備品棚②",
+      "iconFile": "",
+      "content": "救助用のロープがあるが、特に不審な点は見られない",
+      "owner": null,
+      "firstOwner": null,
+      "isPublic": false
     }
   ],
   "endings": [
     {
       "votedCharId": "char_01",
       "endingFile": "/data/ending_char01.txt",
-      "title": "エンディング：速水 響"
+      "title": "エンディング：菱利 聖子"
     },
     {
       "votedCharId": "char_02",
       "endingFile": "/data/ending_char02.txt",
-      "title": "エンディング：一条 麗奈"
+      "title": "エンディング：幸原 剣一"
     },
     {
       "votedCharId": "char_03",
       "endingFile": "/data/ending_char03.txt",
-      "title": "エンディング：神崎 譲二"
+      "title": "エンディング：寺木 士郎"
     },
     {
       "votedCharId": "npc_victim",
       "endingFile": "/data/ending_victim.txt",
-      "title": "エンディング：西園寺 剛"
+      "title": "エンディング：蹴泥 逸茂"
     },
     {
       "votedCharId": "default",
@@ -192,29 +360,24 @@
   ],
   "debriefing": {
     "mainCommentary": {
-      "title": "解説",
+      "title": "あとがき",
       "file": "/data/debriefing_main.txt"
     },
-    "characterEndings": [
+    "characterInfo": [
       {
         "id": "reveal_char_01",
-        "title": "速水 響 END",
-        "file": "/data/ending_char01.txt"
+        "title": "菱利 聖子 END & STORY",
+        "file": "/data/debriefing_char01.txt"
       },
       {
         "id": "reveal_char_02",
-        "title": "一条 麗奈 END",
-        "file": "/data/ending_char02.txt"
+        "title": "幸原 剣一 END & STORY",
+        "file": "/data/debriefing_char02.txt"
       },
       {
         "id": "reveal_char_03",
-        "title": "神崎 譲二 END",
-        "file": "/data/ending_char03.txt"
-      },
-      {
-        "id": "reveal_victim",
-        "title": "西園寺 剛 END",
-        "file": "/data/ending_victim.txt"
+        "title": "寺木 士郎 END & STORY",
+        "file": "/data/debriefing_char03.txt"
       }
     ]
   }

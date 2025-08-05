@@ -1,7 +1,7 @@
 // src/types.ts
 export interface Goal {
-    text: string;           // 目標テキスト
-    points: number;         // 点数
+  text: string;           // 目標テキスト
+  points: number;         // 点数
 }
 
 // キャラクター情報
@@ -12,8 +12,23 @@ export interface Character {
   profile: string;
   imageFile?: string;
   storyFile?: string;
-  goals?: { text: string; points: number }[];
+  skills?: Skill[];
+  goals?: { text: string; hint: string; points: number; judge: string; }[];
   mapImageFile?: string;
+}
+// スキル情報
+export interface Skill {
+  id: string | null;
+  name: string;
+  type: 'passive' | 'active';
+  description: string;
+  used: boolean;
+}
+// スキルの詳細情報
+export interface SkillInfoData {
+  id: string;
+  name: string;
+  description: string;
 }
 // エンディング情報
 export interface Ending {
@@ -27,7 +42,7 @@ export interface DebriefingContent {
   file: string;
 }
 
-export interface DebriefingCharacterEnding {
+export interface DebriefingCharacterInfos {
   id: string;
   title: string;
   file: string;
@@ -36,7 +51,7 @@ export interface DebriefingCharacterEnding {
 export interface ScenarioData {
   title: string;
   titleImage?: string; // Optional title image path
-  scheduleFile: string,
+  introductionFile: string,
   synopsisFile: string,
   commonInfo: {
     textFile: string;
@@ -45,18 +60,21 @@ export interface ScenarioData {
     textFile: string;
   };
   discussionPhaseSettings: {
+    howto: string;
     firstDiscussion: {
       maxCardsPerPlayer: number;
+      timeLimit: number;
     };
     secondDiscussion: {
       maxCardsPerPlayer: number;
+      timeLimit: number;
     };
   };
   characters: Character[];
   endings: Ending[];
   debriefing: {
     mainCommentary: DebriefingContent;
-    characterEndings: DebriefingCharacterEnding[];
+    characterInfo: DebriefingCharacterInfos[];
   };
 }
 
@@ -71,10 +89,25 @@ export interface Player {
     firstDiscussion: number;
     secondDiscussion: number;
   };
+  skills: Skill[];
 }
 
 // キャラクター選択状況
 export type CharacterSelections = Record<string, string | null>; // { [characterId]: socketId | null }
+
+// 情報カードの条件
+export interface Condition {
+  type: 'type_owner' | 'type_first_ownew' | 'type_public';
+  id?: string; // 'type_owner', 'type_first_ownew'の場合、キャラクターID
+}
+
+// 情報カードの条件付き情報
+export interface ConditionalInfo {
+  conditions: Condition[];
+  andOr: 'AND' | 'OR';
+  trueInfo: string;
+  falseInfo: string;
+}
 
 // 情報カード
 export interface InfoCard {
@@ -83,7 +116,9 @@ export interface InfoCard {
   iconFile?: string;
   content: string;
   owner: string | null; // userId of the owner
+  firstOwner: string | null;
   isPublic: boolean;
+  conditionalInfo?: ConditionalInfo;
 }
 
 // 議論タイマー
@@ -101,4 +136,10 @@ export type VoteState = Record<string, string>; // { [voterUserId]: votedCharact
 export interface VoteResult {
   votedCharacterId: string;
   count: number;
+}
+
+// ゲームログのエントリ
+export interface GameLogEntry {
+  type: string;
+  message: string;
 }

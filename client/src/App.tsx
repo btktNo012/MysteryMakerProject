@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useReducer } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
 // 各画面コンポーネントをインポート
-import AttentionScreen from './screens/AttentionScreen';
+import SplashScreen from './screens/SplashScreen';
 import StartScreen from './screens/StartScreen';
 import WaitingScreen from './screens/WaitingScreen';
 import InfoDisplayScreen from './screens/InfoDisplayScreen';
@@ -13,23 +13,83 @@ import DiscussionScreen from './screens/DiscussionScreen';
 import VotingScreen from './screens/VotingScreen';
 import EndingScreen from './screens/EndingScreen';
 import DebriefingScreen from './screens/DebriefingScreen';
-import { type ScenarioData, type Player, type CharacterSelections, type InfoCard, type DiscussionTimer, type VoteState, type VoteResult } from './types';
+import { type ScenarioData, type Player, type CharacterSelections, type InfoCard, type DiscussionTimer, type VoteState, type VoteResult, type SkillInfoData, type GameLogEntry } from './types';
 import { type TabItem } from './components/Tabs';
+import { useSkills } from './hooks/useSkills';
 import TextRenderer from './components/TextRenderer';
 import Timer from './components/Timer';
-import Modal from './components/Modal';
+import AppModals from './components/AppModals';
 import './style.css';
+import SkillOverlay from './components/SkillOverlay';
 
-type GamePhase = 'attention' | 'start' | 'waiting' | 'schedule' | 'synopsis' | 'characterSelect' | 'commonInfo' | 'individualStory' | 'firstDiscussion' | 'interlude' | 'secondDiscussion' | 'voting' | 'ending' | 'debriefing'
+type GamePhase =
+  'splash' |
+  'start' |
+  'waiting' |
+  'introduction' |
+  'synopsis' |
+  'characterSelect' |
+  'commonInfo' |
+  'individualStory' |
+  'firstDiscussion' |
+  'interlude' |
+  'secondDiscussion' |
+  'voting' |
+  'ending' |
+  'debriefing';
 
-// --- 定数 ---
-const FIRST_DISCUSSION_SECONDS = 600;
-const SECOND_DISCUSSION_SECONDS = 600;
+// --- モーダル管理用Reducer ---
+type ModalType =
+  'createRoom' |
+  'findRoom' |
+  'expMurder' |
+  'hoReadForcedEnd' |
+  'hoReadEnd' |
+  'voteResult' |
+  'voteTied' |
+  'getCardError' |
+  'confirmCloseRoom' |
+  'characterSelectConfirm' |
+  'skillConfirm';
+type ModalState = Record<ModalType, boolean>;
+type ModalAction =
+  { type: 'OPEN'; modal: ModalType } |
+  { type: 'CLOSE'; modal: ModalType } |
+  { type: 'CLOSE_ALL' };
+
+const initialModalState: ModalState = {
+  createRoom: false,
+  findRoom: false,
+  expMurder: false,
+  hoReadForcedEnd: false,
+  hoReadEnd: false,
+  voteResult: false,
+  voteTied: false,
+  getCardError: false,
+  confirmCloseRoom: false,
+  characterSelectConfirm: false,
+  skillConfirm: false
+};
+
+const modalReducer = (state: ModalState, action: ModalAction): ModalState => {
+  switch (action.type) {
+    case 'OPEN':
+      return { ...state, [action.modal]: true };
+    case 'CLOSE':
+      return { ...state, [action.modal]: false };
+    case 'CLOSE_ALL':
+      return { ...initialModalState };
+    default:
+      return state;
+  }
+};
+
 
 function App() {
   // --- ステート定義 ---
-  const [gamePhase, setGamePhase] = useState<GamePhase>('attention');
+  const [gamePhase, setGamePhase] = useState<GamePhase>('splash');
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
+  const [skillInfo, setSkillInfo] = useState<SkillInfoData[] | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [userId, setUserId] = useState(''); // 永続的なユーザーID
   const [myPlayer, setMyPlayer] = useState<Player | null>(null);
@@ -37,17 +97,10 @@ function App() {
   const [roomId, setRoomId] = useState('');
   const [players, setPlayers] = useState<Player[]>([]);
   const [maxPlayers, setMaxPlayers] = useState(0);
-  const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
-  const [isFindRoomModalOpen, setIsFindRoomModalOpen] = useState(false);
-  const [isExpMurderModalOpen, setIsExpMurderModalOpen] = useState(false);
-  const [isHoReadEndModalOpen, setIsHoReadEndModalOpen] = useState(false);
-  const [isVoteResultModalOpen, setIsVoteResultModalOpen] = useState(false);
-  const [isVoteTiedModalOpen, setIsVoteTiedModalOpen] = useState(false);
-  const [isGetCardErrorModalOpen, setIsGetCardErrorModalOpen] = useState(false);
+  const [modalState, dispatchModal] = useReducer(modalReducer, initialModalState);
   const [getCardErrorMessage, setGetCardErrorMessage] = useState('');
-  const [isConfirmCloseRoomModalOpen, setIsConfirmCloseRoomModalOpen] = useState(false);
-  const [isCharacterSelectConfirmModalOpen, setIsCharacterSelectConfirmModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [skillMessage, setSkillMessage] = useState<string>('');
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [characterSelections, setCharacterSelections] = useState<CharacterSelections>({});
   const [readingTimerEndTime, setReadingTimerEndTime] = useState<number | null>(null);
@@ -56,11 +109,54 @@ function App() {
   const [discussionTimer, setDiscussionTimer] = useState<DiscussionTimer>({ endTime: null, isTicking: false, phase: null, endState: 'none' });
   const [voteState, setVoteState] = useState<VoteState>({});
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
+  const [gameLog, setGameLog] = useState<GameLogEntry[]>([]);
+
+  const userIdRef = useRef(userId);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   const characterSelectionsRef = useRef(characterSelections);
   useEffect(() => {
     characterSelectionsRef.current = characterSelections;
   }, [characterSelections]);
+
+  // スキル使用確認モーダル用のstateを追加
+  const [skillConfirmModal, setSkillConfirmModal] = useState<{
+    card: InfoCard | null;
+  }>({ card: null });
+
+  // モーダルを開く関数
+  const openSkillConfirmationModal = (card: InfoCard) => {
+    setSkillConfirmModal({ card });
+    // card.nameをスキル対象にするか確認するメッセージ
+    setSkillMessage(`「${card.name}」でよろしいですか？`);
+    dispatchModal({ type: 'OPEN', modal: 'skillConfirm' });
+  };
+
+  // --- スキル用カスタムフックの利用 ---
+  const {
+    activeSkillState,
+    handleUseSkill,
+    handleCancelSkill,
+    handleSkillTargetSelect
+  } = useSkills(socket, roomId, userId, infoCards, openSkillConfirmationModal);
+
+  // --- スキルモーダルで「YES」が押された時の処理 ---
+  const handleConfirmSkillUse = () => {
+    if (skillConfirmModal.card && activeSkillState.skillId) {
+      socket?.emit('useActiveSkill', {
+        roomId,
+        userId,
+        skillId: activeSkillState.skillId,
+        payload: { targetCardId: skillConfirmModal.card.id }
+      });
+    }
+    // モーダルを閉じ、スキル状態をリセット
+    setSkillConfirmModal({ card: null });
+    dispatchModal({ type: 'CLOSE', modal: 'skillConfirm' });
+    handleCancelSkill(); // スキル状態を'inactive'に戻す
+  };
 
   // --- 副作用 ---
   useEffect(() => {
@@ -73,7 +169,7 @@ function App() {
     setUserId(storedUserId);
 
     // 2. Socket.IO接続
-    const newSocket = io('http://localhost:3001');
+    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
     setSocket(newSocket);
 
     // 3. 接続後の処理
@@ -86,7 +182,7 @@ function App() {
         console.log(`Attempting to rejoin room ${storedRoomId} as ${storedUsername}`);
         newSocket.emit('joinRoom', {
           roomId: storedRoomId,
-          userId: storedUserId,
+          userId: storedUserId, // ステートではなくローカル変数を使う
           username: storedUsername
         });
       }
@@ -106,10 +202,10 @@ function App() {
       setDiscussionTimer(data.discussionTimer);
       setVoteState(data.votes);
       setVoteResult(data.voteResult);
+      setGameLog(data.gameLog);
       setGamePhase(data.gamePhase);
-      setIsCreateRoomModalOpen(false);
+      dispatchModal({ type: 'CLOSE', modal: 'createRoom' });
       localStorage.setItem('roomId', data.roomId);
-      localStorage.setItem('username', username); // usernameも保存
     });
 
     // ルーム参加・復帰完了
@@ -124,22 +220,24 @@ function App() {
       setDiscussionTimer(data.discussionTimer);
       setVoteState(data.votes);
       setVoteResult(data.voteResult);
+      setGameLog(data.gameLog);
       setGamePhase(data.gamePhase);
       setReadingTimerEndTime(data.readingTimerEndTime);
-      setIsFindRoomModalOpen(false);
-      setIsExpMurderModalOpen(false);
+      dispatchModal({ type: 'CLOSE', modal: 'findRoom' });
+      dispatchModal({ type: 'CLOSE', modal: 'expMurder' });
       localStorage.setItem('roomId', data.roomId);
-      if (username) localStorage.setItem('username', username); // usernameも保存
     });
 
     // プレイヤー情報更新
-    newSocket.on('updatePlayers', (data) => {
-      console.log('Players updated:', data);
+    newSocket.on('updatePlayers', (data: { players: Player[] }) => {
       setPlayers(data.players);
-      // 自分のプレイヤー情報も更新
-      const me = data.players.find((p: Player) => p.userId === userId);
+
+      // 自分のプレイヤー情報も更新 (refを使って最新のuserIdを参照する)
+      const me = data.players.find((p: Player) => p.userId === userIdRef.current);
       if (me) {
         setMyPlayer(me);
+      } else {
+        console.log('Could not find myPlayer in update.');
       }
     });
 
@@ -148,7 +246,8 @@ function App() {
       console.log('Game phase changed to:', newPhase);
       setGamePhase(newPhase);
       if (newPhase === 'firstDiscussion') {
-        setIsHoReadEndModalOpen(false);
+        dispatchModal({ type: 'CLOSE', modal: 'hoReadForcedEnd' });
+        dispatchModal({ type: 'CLOSE', modal: 'hoReadEnd' });
         setReadingTimerEndTime(null);
       }
       if (newPhase === 'debriefing') {
@@ -163,6 +262,12 @@ function App() {
     newSocket.on('infoCardsUpdated', (updatedInfoCards) => {
       console.log('Info cards updated');
       setInfoCards(updatedInfoCards);
+    });
+
+    // ゲームログ更新
+    newSocket.on('gameLogUpdated', (log) => {
+      console.log('Game log updated');
+      setGameLog(log);
     });
 
     // 議論タイマー更新
@@ -180,7 +285,7 @@ function App() {
     // 決選投票
     newSocket.on('voteTied', () => {
       console.log('Vote tied, re-voting required.');
-      setIsVoteTiedModalOpen(true);
+      dispatchModal({ type: 'OPEN', modal: 'voteTied' });
       setVoteState({}); // 投票状況をリセット
     });
 
@@ -189,7 +294,7 @@ function App() {
       console.log('Vote result finalized', result);
       setVoteResult(result);
       setVoteState(votes);
-      setIsVoteResultModalOpen(true); // モーダルを表示
+      dispatchModal({ type: 'OPEN', modal: 'voteResult' }); // モーダルを表示
     });
 
     // 投票結果確定
@@ -215,7 +320,7 @@ function App() {
     // HOタイマー延長
     newSocket.on('readingTimeExtended', ({ endTime }) => {
       setReadingTimerEndTime(endTime);
-      setIsHoReadEndModalOpen(false);
+      dispatchModal({ type: 'CLOSE', modal: 'hoReadEnd' });
     });
 
     // エラーハンドリング
@@ -227,7 +332,7 @@ function App() {
 
     newSocket.on('getCardError', ({ message }: { message: string }) => {
       setGetCardErrorMessage(message);
-      setIsGetCardErrorModalOpen(true);
+      dispatchModal({ type: 'OPEN', modal: 'getCardError' });
     });
 
     // ルーム解散
@@ -245,6 +350,7 @@ function App() {
       setDiscussionTimer({ endTime: null, isTicking: false, phase: null, endState: 'none' });
       setVoteState({});
       setVoteResult(null);
+      setGameLog([]);
       // localStorageからroomIdを削除
       localStorage.removeItem('roomId');
     });
@@ -256,11 +362,21 @@ function App() {
     };
   }, []); // このuseEffectはマウント時に一度だけ実行する
 
+  // シナリオデータの読み込み
   useEffect(() => {
     fetch('/scenario.json')
       .then(response => response.json())
       .then(data => setScenario(data))
+      .then(() => console.log("シナリオの読み込みに成功"))
       .catch(error => console.error("シナリオの読み込みに失敗:", error));
+  }, []);
+  // スキルデータの読み込み
+  useEffect(() => {
+    fetch('/skill_info.json')
+      .then(response => response.json())
+      .then(data => setSkillInfo(data))
+      .then(() => console.log("スキルデータの読み込みに成功"))
+      .catch(error => console.error("スキルデータの読み込みに失敗:", error));
   }, []);
 
   // タイマー処理
@@ -275,7 +391,7 @@ function App() {
       const diff = Math.round((readingTimerEndTime - now) / 1000);
       setRemainingTime(diff > 0 ? diff : 0);
       if (diff <= 0) {
-        setIsHoReadEndModalOpen(true);
+        dispatchModal({ type: 'OPEN', modal: 'hoReadEnd' });
       }
     };
 
@@ -289,11 +405,13 @@ function App() {
   // --- イベントハンドラ ---
   const handleCreateRoom = () => {
     if (username.trim() === '') return setErrorMessage('ユーザー名を入力してください。');
+    localStorage.setItem('username', username);
     socket?.emit('createRoom', { username, userId });
   };
 
   const handleJoinRoom = () => {
     if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
+    localStorage.setItem('username', username);
     socket?.emit('joinRoom', { username, userId, roomId });
   };
 
@@ -311,15 +429,15 @@ function App() {
     localStorage.removeItem('roomId');
   };
 
-  const handleCloseRoom = () => setIsConfirmCloseRoomModalOpen(true);
+  const handleCloseRoom = () => dispatchModal({ type: 'OPEN', modal: 'confirmCloseRoom' });
   const handleConfirmCloseRoom = () => {
     socket?.emit('closeRoom', { roomId, userId });
-    setIsConfirmCloseRoomModalOpen(false);
+    dispatchModal({ type: 'CLOSE', modal: 'confirmCloseRoom' });
   }
   const handleStartGame = () => socket?.emit('startGame', { roomId, userId });
   const handleCharacterSelect = (characterId: string | null) => socket?.emit('selectCharacter', { roomId, userId, characterId });
   const handleCharacterConfirm = () => {
-    setIsCharacterSelectConfirmModalOpen(false);
+    dispatchModal({ type: 'CLOSE', modal: 'characterSelectConfirm' });
     socket?.emit('confirmCharacters', { roomId, userId })
   };
   const handleExtendTimer = () => socket?.emit('extendReadingTimer', { roomId, userId });
@@ -343,7 +461,7 @@ function App() {
   const handleProceedToEnding = () => {
     socket?.emit('changeGamePhase', { roomId, newPhase: 'ending' });
     setGamePhase('ending');
-    setIsVoteResultModalOpen(false); // モーダルを閉じる
+    dispatchModal({ type: 'CLOSE', modal: 'voteResult' }); // モーダルを閉じる
   }
 
   // エンディング・感想戦ハンドラ
@@ -361,8 +479,8 @@ function App() {
   const shouldShowReadingTimer = gamePhase === 'commonInfo' || gamePhase === 'individualStory';
 
   const renderScreen = () => {
-    if (gamePhase !== 'attention' && !scenario) return <div>シナリオを読み込んでいます...</div>;
-    if (gamePhase !== 'attention' && gamePhase !== 'start' && !myPlayer) {
+    if (gamePhase !== 'splash' && (!scenario || !skillInfo)) return <div>ゲームデータを読み込んでいます...</div>;
+    if (gamePhase !== 'splash' && gamePhase !== 'start' && !myPlayer) {
       return <div>プレイヤー情報を読み込んでいます...ページをリロードしてしばらく待ってもこの画面が消えない場合は、最初からやり直してください。</div>;
     }
 
@@ -379,13 +497,21 @@ function App() {
 
     const selectedChar = scenario?.characters.find(char => char.id === selectedCharacterId);
 
+    let DISCUSSION_SECCONDS = 600;
+    // 議論フェイズの場合、制限時間を設定
+    if (gamePhase === 'firstDiscussion' || gamePhase === 'secondDiscussion') {
+      if (scenario?.discussionPhaseSettings[gamePhase]?.timeLimit) {
+        DISCUSSION_SECCONDS = scenario?.discussionPhaseSettings[gamePhase]?.timeLimit;
+      }
+    }
+
     switch (gamePhase) {
-      case 'attention': return <AttentionScreen onNext={() => setGamePhase('start')} />;
-      case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => setIsCreateRoomModalOpen(true)} onFindRoom={() => setIsFindRoomModalOpen(true)} onExpMurder={() => setIsExpMurderModalOpen(true)} />;
+      case 'splash': return <SplashScreen onNext={() => setGamePhase('start')} />;
+      case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => dispatchModal({ type: 'OPEN', modal: 'createRoom' })} onFindRoom={() => dispatchModal({ type: 'OPEN', modal: 'findRoom' })} onExpMurder={() => dispatchModal({ type: 'OPEN', modal: 'expMurder' })} />;
       case 'waiting': return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={maxPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
-      case 'schedule': return <InfoDisplayScreen title="進行スケジュール" filePath={scenario!.scheduleFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('synopsis')} />;
-      case 'synopsis': return <InfoDisplayScreen title="あらすじ" filePath={scenario!.synopsisFile} onBackFlg={true} onBack={() => setGamePhase('schedule')} onNext={() => setGamePhase('characterSelect')} />;
-      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={()=>setIsCharacterSelectConfirmModalOpen(true)} players={players} />;
+      case 'introduction': return <InfoDisplayScreen title="はじめに" filePath={scenario!.introductionFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('synopsis')} />;
+      case 'synopsis': return <InfoDisplayScreen title="あらすじ" filePath={scenario!.synopsisFile} onBackFlg={true} onBack={() => setGamePhase('introduction')} onNext={() => setGamePhase('characterSelect')} />;
+      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={() => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' })} players={players} />;
       case 'commonInfo': return (
         <>
           <InfoDisplayScreen title="ハンドアウト読み込み：共通情報" filePath={scenario!.commonInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('individualStory')} />
@@ -395,22 +521,27 @@ function App() {
         if (!selectedChar) return <div>選択されたキャラクター情報が見つかりません。</div>;
         return (
           <>
-            <IndividualStoryScreen character={selectedChar} onBack={() => setGamePhase('commonInfo')} onNext={handleProceedToDiscussion} isMaster={myPlayer?.isMaster || false} />
+            <IndividualStoryScreen
+              character={selectedChar}
+              onBack={() => setGamePhase('commonInfo')}
+              onNext={() => dispatchModal({ type: 'OPEN', modal: 'hoReadForcedEnd' })}
+              isMaster={myPlayer?.isMaster || false} />
           </>
         );
       case 'firstDiscussion':
         if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
         const tabItems1: TabItem[] = [
+          { label: '遊び方', content: <TextRenderer filePath={scenario!.discussionPhaseSettings.howto} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
-          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} alt="現場見取り図" style={{ maxWidth: '100%', height: 'auto' }} /> : <div>地図情報はありません。</div> }
+          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '100%', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
         return <DiscussionScreen
           title="第一議論フェイズ"
           gamePhase={gamePhase}
           character={selectedChar}
           tabItems={tabItems1}
-          discussionTime={FIRST_DISCUSSION_SECONDS}
+          discussionTime={DISCUSSION_SECCONDS}
           infoCards={infoCards}
           players={players}
           myPlayer={myPlayer}
@@ -420,17 +551,20 @@ function App() {
           onMakeCardPublic={handleMakeCardPublic}
           onTransferCard={handleTransferCard}
           discussionTimer={discussionTimer}
-          onStartTimer={() => handleStartDiscussionTimer('firstDiscussion', FIRST_DISCUSSION_SECONDS)}
+          onStartTimer={() => handleStartDiscussionTimer('firstDiscussion', DISCUSSION_SECCONDS)}
           onPauseTimer={handlePauseDiscussionTimer}
           onResumeTimer={handleResumeDiscussionTimer}
           onRequestEnd={handleRequestEndDiscussion}
           onCancelEnd={handleCancelEndDiscussion}
           onConfirmEnd={handleConfirmEndDiscussion}
+          onUseSkill={handleUseSkill}
+          gameLog={gameLog}
         />;
       case 'interlude': return <InfoDisplayScreen title="中間情報" filePath={scenario!.intermediateInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={handleProceedToSecondDiscussion} />;
       case 'secondDiscussion':
         if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
         const tabItems2: TabItem[] = [
+          { label: '遊び方', content: <TextRenderer filePath={scenario!.discussionPhaseSettings.howto} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
           { label: '中間情報', content: <TextRenderer filePath={scenario!.intermediateInfo.textFile} /> },
@@ -441,7 +575,7 @@ function App() {
           gamePhase={gamePhase}
           character={selectedChar}
           tabItems={tabItems2}
-          discussionTime={SECOND_DISCUSSION_SECONDS}
+          discussionTime={DISCUSSION_SECCONDS}
           infoCards={infoCards}
           players={players}
           myPlayer={myPlayer}
@@ -451,12 +585,14 @@ function App() {
           onMakeCardPublic={handleMakeCardPublic}
           onTransferCard={handleTransferCard}
           discussionTimer={discussionTimer}
-          onStartTimer={() => handleStartDiscussionTimer('secondDiscussion', SECOND_DISCUSSION_SECONDS)}
+          onStartTimer={() => handleStartDiscussionTimer('secondDiscussion', DISCUSSION_SECCONDS)}
           onPauseTimer={handlePauseDiscussionTimer}
           onResumeTimer={handleResumeDiscussionTimer}
           onRequestEnd={handleRequestEndDiscussion}
           onCancelEnd={handleCancelEndDiscussion}
           onConfirmEnd={handleConfirmEndDiscussion}
+          onUseSkill={handleUseSkill}
+          gameLog={gameLog}
         />;
       case 'voting':
         if (!myPlayer) return <div>プレイヤー情報がありません。</div>;
@@ -477,7 +613,7 @@ function App() {
           onNext={handleProceedToDebriefing}
         />;
       case 'debriefing': return <DebriefingScreen scenario={scenario!} infoCards={infoCards} players={players} isMaster={myPlayer?.isMaster || false} onCloseRoom={handleCloseRoom} />;
-      default: return <AttentionScreen onNext={() => setGamePhase('start')} />;
+      default: return <SplashScreen onNext={() => setGamePhase('start')} />;
     }
   };
 
@@ -488,94 +624,41 @@ function App() {
           <Timer initialSeconds={remainingTime} isTicking={true} onTimeUp={() => { }} />
         </div>
       )}
-
+      {activeSkillState.status === 'selecting_target' && (
+        <SkillOverlay
+          skillInfoData={skillInfo}
+          skillId={activeSkillState.skillId!}
+          infoCards={infoCards}
+          myPlayer={myPlayer!}
+          onSelectTarget={handleSkillTargetSelect}
+          onCancel={handleCancelSkill}
+        />
+      )}
       {renderScreen()}
 
-      <Modal
-        isOpen={isCharacterSelectConfirmModalOpen}
-        message="ハンドアウト読み込み画面に移動しますか？"
-        onConfirm={handleCharacterConfirm}
-        onClose={() => setIsCharacterSelectConfirmModalOpen(false)}
-        confirmButtonText="はい"
-        closeButtonText="いいえ"
-      >
-        <div className='modal-message'>移動すると同時にタイマーが起動します。全員の準備が終わったことを確認してから次へ進んでください。</div>
-      </Modal>
-      <Modal
-        isOpen={isHoReadEndModalOpen}
-        message={myPlayer?.isMaster ? "第一議論フェイズ画面に移動しますか？" : "ルームマスターが操作中です..."}
-        onConfirm={myPlayer?.isMaster ? handleProceedToDiscussion : undefined}
-        onClose={myPlayer?.isMaster ? handleExtendTimer : undefined}
-        confirmButtonText="OK"
-        closeButtonText={myPlayer?.isMaster ? "延長する(3分)" : undefined}
+      <AppModals
+        modalState={modalState}
+        dispatchModal={dispatchModal}
+        myPlayer={myPlayer}
+        voteResult={voteResult}
+        scenario={scenario}
+        getCardErrorMessage={getCardErrorMessage}
+        username={username}
+        roomId={roomId}
+        errorMessage={errorMessage}
+        skillMessage={skillMessage}
+        handleCharacterConfirm={handleCharacterConfirm}
+        handleProceedToDiscussion={handleProceedToDiscussion}
+        handleExtendTimer={handleExtendTimer}
+        handleProceedToEnding={handleProceedToEnding}
+        handleConfirmCloseRoom={handleConfirmCloseRoom}
+        handleCreateRoom={handleCreateRoom}
+        handleConfirmSkillUse={handleConfirmSkillUse}
+        setUsername={setUsername}
+        setErrorMessage={setErrorMessage}
+        handleJoinRoom={handleJoinRoom}
+        setRoomId={setRoomId}
       />
-
-      <Modal
-        isOpen={isVoteResultModalOpen}
-        message={`投票の結果、${scenario?.characters.find(c => c.id === voteResult?.votedCharacterId)?.name || ''}が選ばれました`}
-        onConfirm={handleProceedToEnding}
-        confirmButtonText="OK"
-      >
-        <div className="modal-message">
-          エンディングに移行します。
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={isVoteTiedModalOpen}
-        message="決選投票となりました。再度投票を行ってください。"
-        onConfirm={() => setIsVoteTiedModalOpen(false)}
-        confirmButtonText="OK"
-      />
-
-      <Modal
-        isOpen={isGetCardErrorModalOpen}
-        message={getCardErrorMessage}
-        onConfirm={() => setIsGetCardErrorModalOpen(false)}
-        confirmButtonText="OK"
-      />
-
-      <Modal
-        isOpen={isConfirmCloseRoomModalOpen}
-        message="解散するとすべてのメンバーがタイトル画面に移動します。"
-        onConfirm={handleConfirmCloseRoom}
-        onClose={() => setIsConfirmCloseRoomModalOpen(false)}
-        confirmButtonText="はい"
-        closeButtonText="いいえ"
-      >
-        <div className='modal-message'>よろしいですか？</div>
-      </Modal>
-
-      <Modal isOpen={isCreateRoomModalOpen} message="ユーザー名を入力してください" onConfirm={handleCreateRoom} onClose={() => setIsCreateRoomModalOpen(false)} confirmButtonText="作成" closeButtonText="キャンセル">
-        <div className="modal-inputs">
-          <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setErrorMessage(null); }} placeholder="ユーザー名" className="modal-input" />
-        </div>
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
-      </Modal>
-
-      <Modal isOpen={isFindRoomModalOpen} message="ユーザー名とルームIDを入力してください" onConfirm={handleJoinRoom} onClose={() => setIsFindRoomModalOpen(false)} confirmButtonText="参加" closeButtonText="キャンセル">
-        <div className="modal-inputs">
-          <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setErrorMessage(null); }} placeholder="ユーザー名" className="modal-input" />
-          <input type="text" value={roomId} onChange={(e) => { setRoomId(e.target.value); setErrorMessage(null); }} placeholder="ルームID" className="modal-input" />
-        </div>
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
-      </Modal>
-
-      <Modal isOpen={isExpMurderModalOpen} message="マーダーミステリーとは？" onClose={() => setIsExpMurderModalOpen(false)} closeButtonText="閉じる">
-        <div className="modal-message">
-          マーダーミステリーは、参加者が殺人事件などの謎に挑む推理型の体験ゲームです。<br />
-          各プレイヤーは物語内の登場人物を演じ、限られた情報と証言をもとに事件の真相を探ります。<br />
-          犯人役もプレイヤーの中に潜んでおり、自らの正体を隠しながら捜査をかく乱します。<br />
-          物語と推理、演技が融合した、没入感の高い対話型エンターテインメントです！<br />
-          詳しくは<a href='https://www.bodoge-intl.com/list/insapo/murder/' target='_blank'>こちら（外部サイト）</a>をご覧ください<br />
-          <a href='https://www.bodoge-intl.com/list/insapo/murder/' target='_blank'>
-            <img
-              src={"/images/murder-exp-400x229.png"}
-              alt="マーダーミステリーが面白い！"
-            />
-          </a>
-        </div>
-      </Modal>
     </div>
   );
 }

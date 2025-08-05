@@ -1,0 +1,1 @@
+export const APP_COPYRIGHT = 'Copyright ©2025 グリングスGames All Rights Reserved.';

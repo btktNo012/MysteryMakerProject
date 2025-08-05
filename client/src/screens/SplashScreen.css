@@ -1,6 +1,6 @@
-/* AttentionScreen.css */
+/* SplashScreen.css */
 
-.attention-container {
+.splash-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,7 +16,7 @@
 }
 
 /* 画面から消える時のアニメーションを適用するクラス */
-.attention-container.fade-out {
+.splash-container.fade-out {
   /* fadeOut アニメーションを適用 */
   animation: fadeOut 2s ease-in forwards;
 }

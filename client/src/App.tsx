@@ -140,7 +140,7 @@ function App() {
     handleUseSkill,
     handleCancelSkill,
     handleSkillTargetSelect
-  } = useSkills(socket, roomId, userId, infoCards, openSkillConfirmationModal);
+  } = useSkills(userId, infoCards, openSkillConfirmationModal);
 
   // --- スキルモーダルで「YES」が押された時の処理 ---
   const handleConfirmSkillUse = () => {
@@ -602,8 +602,7 @@ function App() {
           myPlayer={myPlayer}
           voteState={voteState}
           voteResult={voteResult}
-          onSubmitVote={handleSubmitVote}
-          onProceedToEnding={handleProceedToEnding} />;
+          onSubmitVote={handleSubmitVote} />;
       case 'ending':
         if (!voteResult) return <div>投票結果がありません。</div>;
         let targetEnding = scenario!.endings.find(end => end.votedCharId === voteResult.votedCharacterId) || scenario!.endings.find(end => end.votedCharId === 'default');

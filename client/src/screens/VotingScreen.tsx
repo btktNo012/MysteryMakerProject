@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import type { Character, Player, VoteState, VoteResult } from '../types';
 import StyledButton from '../components/StyledButton';
 import './VotingScreen.css';
@@ -10,7 +10,6 @@ interface VotingScreenProps {
   voteState: VoteState;
   voteResult: VoteResult | null;
   onSubmitVote: (votedCharacterId: string) => void;
-  onProceedToEnding: () => void;
 }
 
 const VotingScreen: React.FC<VotingScreenProps> = ({ 
@@ -19,8 +18,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({
   myPlayer,
   voteState,
   voteResult,
-  onSubmitVote,
-  onProceedToEnding
+  onSubmitVote
 }) => {
   const [selectedVote, setSelectedVote] = useState<string>('');
 

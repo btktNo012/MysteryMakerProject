@@ -19,8 +19,6 @@ export interface SkillHandlers {
 
 // カスタムフックの定義
 export const useSkills = (
-    socket: Socket | null,
-    roomId: string,
     userId: string | null,
     infoCards: InfoCard[],
     // 確認モーダルを開くための関数をApp.tsxから受け取る

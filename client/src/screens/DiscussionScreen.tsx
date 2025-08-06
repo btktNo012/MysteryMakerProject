@@ -99,7 +99,7 @@ const CharacterListTab: React.FC<{
             {char.imageFile && <img src={char.imageFile} alt={char.name} className="character-item-image" />}
             <div className="character-item-details">
               <h4>
-                {char.name}
+                {char.name}（{char.nameRuby}）
                 {char.type === 'PC' && (
                   <span style={{ fontSize: '0.9em', color: '#888', marginLeft: '8px' }}>
                     {playerName || '未選択'}

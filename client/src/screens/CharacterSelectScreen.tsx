@@ -18,10 +18,10 @@ interface CharacterSelectScreenProps {
 }
 
 // キャラクター選択画面のコンポーネント
-const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({ 
-  characters, 
-  onBack, 
-  onCharacterSelect, 
+const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
+  characters,
+  onBack,
+  onCharacterSelect,
   onConfirm,
   characterSelections,
   myPlayerId,
@@ -29,13 +29,12 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   players
 }) => {
 
-  // PC（プレイヤーキャラクター）のみをフィルタリング
-  const playerCharacters = characters.filter(char => char.type === 'PC');
-
   // キャラクターカードがクリックされたときの処理
   const handleCardClick = (character: Character) => {
+    // NPCの場合は何もしない
+    if (character.type === 'NPC') return;
     const currentSelection = characterSelections[character.id];
-    
+
     if (currentSelection === myPlayerId) {
       // 既に自分が選択しているキャラクターを再度クリックした場合、選択を解除
       onCharacterSelect(null);
@@ -61,35 +60,34 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   return (
     <div className="char-select-container">
       <h1>キャラクターセレクト</h1>
+      <div className='note'>演じるキャラクターを選択してください</div>
       <div className="char-select-content">
-        <p className="char-select-info">
-          演じるキャラクターを決めてください。<br/>
-          次の画面では個別ハンドアウトの読み込みが始まります。キャラクターが確定しましたら通話はミュートにしてください。
-        </p>
         <ul className="char-list">
-          {playerCharacters.map(char => {
+          {characters.map(char => {
             const selectorId = characterSelections[char.id];
             const isSelectedByMe = selectorId === myPlayerId;
             const isSelectedByOther = selectorId && !isSelectedByMe;
             const selectorName = getSelectorName(char.id);
 
             return (
-              <li 
-                key={char.id} 
-                className={`char-card ${isSelectedByMe ? 'selected-me' : ''} ${isSelectedByOther ? 'selected-other' : ''}`}
+              <li
+                key={char.id}
+                className={`char-card-${char.type === 'PC' ? 'pc' : 'npc'} ${isSelectedByMe ? 'selected-me' : ''} ${isSelectedByOther ? 'selected-other' : ''}`}
                 onClick={() => handleCardClick(char)}
               >
                 {char.imageFile && <div className='char-image'><img src={char.imageFile} alt={char.name} /></div>}
                 <div className='char-detail'>
-                  <h2 className="char-name">{char.name}</h2>
+                  <h2 className="char-name">{char.name}（{char.nameRuby}）</h2>
                   <p className="char-profile">{char.profile}</p>
                   {selectorName && <p className="char-selector">選択者: {selectorName}</p>}
+                  {char.type === 'NPC' ? (<p className="char-selector npc">NPC</p>) : '' }
                 </div>
               </li>
             );
           })}
         </ul>
       </div>
+      <div className='note'>次の画面からハンドアウトの読み込みが始まります。キャラクター決定後は通話をミュートにしてください</div>
       <div className="navigation-area">
         <StyledButton onClick={onBack}>
           BACK

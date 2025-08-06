@@ -534,7 +534,7 @@ function App() {
           { label: '遊び方', content: <TextRenderer filePath={scenario!.discussionPhaseSettings.howto} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
-          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '100%', height: 'auto' }} /> : <div>地図情報はありません。</div> }
+          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
         return <DiscussionScreen
           title="第一議論フェイズ"
@@ -568,7 +568,7 @@ function App() {
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
           { label: '中間情報', content: <TextRenderer filePath={scenario!.intermediateInfo.textFile} /> },
-          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} alt="現場見取り図" style={{ maxWidth: '100%', height: 'auto' }} /> : <div>地図情報はありません。</div> }
+          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
         return <DiscussionScreen
           title="第二議論フェイズ"

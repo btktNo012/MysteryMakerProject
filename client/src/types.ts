@@ -8,6 +8,7 @@ export interface Goal {
 export interface Character {
   id: string;
   name: string;
+  nameRuby: string;
   type: 'PC' | 'NPC';
   profile: string;
   imageFile?: string;

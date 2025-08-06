@@ -27,8 +27,9 @@
     {
       "id": "char_01",
       "name": "菱利 聖子",
+      "nameRuby": "ヒシリ セイコ",
       "type": "PC",
-      "profile": "28歳。山に慣れた様子の女性",
+      "profile": "性別：女性 年齢：28歳 慎重な性格",
       "imageFile": "",
       "storyFile": "./data/char_01_story.txt",
       "mapImageFile": "/images/map_common.png",
@@ -59,8 +60,9 @@
     {
       "id": "char_02",
       "name": "幸原 剣一",
+      "nameRuby": "コウバル ケンイチ",
       "type": "PC",
-      "profile": "27歳。面倒見のいい男性",
+      "profile": "性別：男性 年齢：27歳 真面目な性格",
       "imageFile": "",
       "storyFile": "./data/char_02_story.txt",
       "mapImageFile": "/images/map_common.png",
@@ -91,8 +93,9 @@
     {
       "id": "char_03",
       "name": "寺木 士郎",
+      "nameRuby": "テラキ シロウ",
       "type": "PC",
-      "profile": "32歳。荒っぽい性格だが山に対する敬意は誰よりも強い男性",
+      "profile": "性別：男性 年齢：32歳 勇敢な性格",
       "imageFile": "",
       "storyFile": "./data/char_03_story.txt",
       "mapImageFile": "/images/map_common.png",
@@ -122,9 +125,10 @@
     },
     {
       "id": "npc_victim",
-      "name": "蹴泥 敦梧",
+      "name": "蹴泥 逸茂",
+      "nameRuby": "ケルデイ イツシゲ",
       "type": "NPC",
-      "profile": "27歳。装備も態度も軽薄な男性。死体となって発見される",
+      "profile": "性別：男性 年齢：26歳 能天気な性格 死体で発見される",
       "imageFile": ""
     }
   ],
@@ -133,7 +137,7 @@
       "id": "card_01",
       "name": "死体の状況①",
       "iconFile": "",
-      "content": "前頭部に強く打ち付けた跡が見られる",
+      "content": "側頭部に強く打ち付けた跡が見られる",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -151,7 +155,7 @@
       "id": "card_03",
       "name": "菱利の荷物①",
       "iconFile": "",
-      "content": "懐中電灯。登山の明かりはヘッドランプが基本だが、予備として持っていく人も多い。アウトドア用の高ルーメンのものだ",
+      "content": "懐中電灯。登山の明かりはヘッドランプが基本だが、予備として持っていく人も多い。\nアウトドア用の高ルーメンのものだ",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,

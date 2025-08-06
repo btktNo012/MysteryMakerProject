@@ -6,9 +6,17 @@ import path from 'path';
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+  "http://localhost:5173" // 開発環境は常に許可
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Viteのフロントエンド
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });

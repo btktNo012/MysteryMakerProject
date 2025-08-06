@@ -1,6 +1,5 @@
 //typescript:client/src/hooks/useSkills.ts
 import { useState } from 'react';
-import { Socket } from 'socket.io-client';
 import { type InfoCard } from '../types'; // 型定義を適宜インポート
 
 // カスタムフックの戻り値の型を定義

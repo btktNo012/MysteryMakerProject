@@ -64,7 +64,6 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
                 </div>)}
             </div>
         </div>
-        <div className='note'>※ハンドアウトの内容は議論フェイズでも確認できます</div>
       </div>
 
       <div className="navigation-area">
@@ -81,4 +80,4 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
   );
 };
 
-export default IndividualStoryScreen;
+export default React.memo(IndividualStoryScreen);

@@ -379,18 +379,23 @@ function App() {
       .catch(error => console.error("スキルデータの読み込みに失敗:", error));
   }, []);
 
-  // タイマー処理
+  // HO読み込み時間のタイマー処理
   useEffect(() => {
+    // HO読み込み終了時間が設定されていない場合は何もしない
     if (readingTimerEndTime === null) {
       setRemainingTime(0);
       return;
     }
 
+    // HO読み込み時間の更新
     const updateRemainingTime = () => {
       const now = Date.now();
+      // HO読み込み終了時間と現在時間の差分を取得
       const diff = Math.round((readingTimerEndTime - now) / 1000);
       setRemainingTime(diff > 0 ? diff : 0);
+      // HO読み込み終了時間になった場合、モーダル表示
       if (diff <= 0) {
+        // HO読み込み終了のモーダルを表示
         dispatchModal({ type: 'OPEN', modal: 'hoReadEnd' });
       }
     };

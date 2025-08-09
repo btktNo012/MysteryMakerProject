@@ -1,6 +1,6 @@
 // src/screens/InfoDisplayScreen.tsx
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import TextRenderer from '../components/TextRenderer';
 import StyledButton from '../components/StyledButton';
 import './InfoDisplayScreen.css'; // 共通スタイルをインポート
@@ -15,10 +15,16 @@ interface InfoDisplayScreenProps {
 }
 
 const InfoDisplayScreen: React.FC<InfoDisplayScreenProps> = ({ title, filePath, onBackFlg, onBack, onNext }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [filePath]);
   return (
     <div className="info-screen-container">
       <h1 className="info-screen-title">{title}</h1>
-      <div className="info-screen-content">
+      <div ref={scrollRef} className="info-screen-content">
         <TextRenderer filePath={filePath} />
       </div>
       <div className="navigation-area">
@@ -35,4 +41,4 @@ const InfoDisplayScreen: React.FC<InfoDisplayScreenProps> = ({ title, filePath, 
   );
 };
 
-export default InfoDisplayScreen;
+export default React.memo(InfoDisplayScreen);

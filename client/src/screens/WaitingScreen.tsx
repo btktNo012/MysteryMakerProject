@@ -42,11 +42,11 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({
       <div className="button-group-waiting">
         {isMaster ? (
           <>
-            <StyledButton onClick={onStart} disabled={!canStart}>
-              ゲーム開始
-            </StyledButton>
             <StyledButton onClick={onClose} className="leave-button">
               ルームを解散する
+            </StyledButton>
+            <StyledButton onClick={onStart} disabled={!canStart}>
+              ゲーム開始
             </StyledButton>
           </>
         ) : (

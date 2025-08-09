@@ -1,5 +1,6 @@
 // src/components/Modal.tsx
 import React from 'react';
+import { motion, AnimatePresence } from "framer-motion";
 import './Modal.css';
 
 // モーダルが受け取るPropsの型定義
@@ -31,37 +32,50 @@ const Modal: React.FC<ModalProps> = ({
   const isCloseOnly = !onConfirm && onClose;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <p className="modal-title">{message}</p>
-        {/* childrenをここでレンダリング */}
-        <div className="modal-body">
-          {children}
-        </div>
-        <div className="modal-buttons">
-          {isConfirmation && (
-            <>
-              <button className="modal-button modal-button-no" onClick={onClose}>
-                {closeButtonText}
-              </button>
-              <button className="modal-button modal-button-yes" onClick={onConfirm}>
+    <AnimatePresence>
+      <motion.div
+        className="modal-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}>
+        <motion.div
+          className="modal-content"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 30 }}
+          transition={{ duration: 0.25 }}
+          onClick={(e) => e.stopPropagation()}>
+          <p className="modal-title">{message}</p>
+          {/* childrenをここでレンダリング */}
+          <div className="modal-body">
+            {children}
+          </div>
+          <div className="modal-buttons">
+            {isConfirmation && (
+              <>
+                <button className="modal-button modal-button-no" onClick={onClose}>
+                  {closeButtonText}
+                </button>
+                <button className="modal-button modal-button-yes" onClick={onConfirm}>
+                  {confirmButtonText}
+                </button>
+              </>
+            )}
+            {isNotification && (
+              <button className="modal-button modal-button-ok" onClick={onConfirm}>
                 {confirmButtonText}
               </button>
-            </>
-          )}
-          {isNotification && (
-            <button className="modal-button modal-button-ok" onClick={onConfirm}>
-              {confirmButtonText}
-            </button>
-          )}
-          {isCloseOnly && (
+            )}
+            {isCloseOnly && (
               <button className="modal-button modal-button-no" onClick={onClose}>
                 {closeButtonText}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

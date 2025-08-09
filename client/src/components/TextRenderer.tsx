@@ -71,4 +71,4 @@ const TextRenderer: React.FC<TextRendererProps> = ({ filePath }) => {
   );
 };
 
-export default TextRenderer;
+export default React.memo(TextRenderer);

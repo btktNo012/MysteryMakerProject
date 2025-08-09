@@ -5,6 +5,7 @@ import StyledButton from '../components/StyledButton'; // 共通ボタンをイ�
 import './StartScreen.css';
 import { APP_COPYRIGHT } from '../copyright';
 import { APP_VERSION } from '../version';
+import { ESTIMATED_TIME } from '../estimatedTime';
 
 // このコンポーネントが受け取るPropsの型定義
 interface StartScreenProps {
@@ -37,6 +38,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRo
             マーダーミステリーとは？
           </StyledButton>
         </div>
+        <div className="estimated-time">{ESTIMATED_TIME}</div>
       </div>
       <div className="start-label">
         <p>version : {APP_VERSION}</p>

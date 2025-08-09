@@ -1,0 +1,1 @@
+export const ESTIMATED_TIME = 'プレイ目安時間 60分';

@@ -52,3 +52,7 @@
     color: #333;
     z-index: 2;
 }
+.estimated-time {
+    color: #333;
+    padding-top: 15px;
+}

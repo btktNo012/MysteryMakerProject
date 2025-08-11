@@ -3,16 +3,41 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 
 const app = express();
 const server = http.createServer(app);
 
+// --- ログ出力関数 ---
+const log = (message: string, ...args: any[]) => {
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+  console.log(`[${timestamp}] ${message}`, ...args);
+};
+
 // --- DB Setup ---
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+let poolConfig: PoolConfig;
+if (process.env.DATABASE_URL) {
+  // サービス環境用設定
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  };
+  log('Connecting to Render PostgreSQL with SSL.');
+}
+else {
+  // ローカル環境用設定
+  poolConfig = {
+    user: 'm_master',
+    host: 'localhost',
+    database: 'mystery_maker',
+    password: 'password',
+    port: 5432,
+  };
+  log('Connecting to local PostgreSQL.');
+}
+
+const pool = new Pool(poolConfig);
 
 const initializeDatabase = async () => {
   const client = await pool.connect();
@@ -50,13 +75,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
-// --- ログ出力関数 ---
-const log = (message: string, ...args: any[]) => {
-  const now = new Date();
-  const timestamp = `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
-  console.log(`[${timestamp}] ${message}`, ...args);
-};
 
 // --- 定数 ---
 const READING_TIME_SECONDS = 600; // 10 minutes
@@ -181,15 +199,15 @@ const saveRoomToDB = async (room: Room) => {
 };
 
 const deleteRoomFromDB = async (roomId: string) => {
-    const client = await pool.connect();
-    try {
-        await client.query('DELETE FROM rooms WHERE room_id = $1', [roomId.toUpperCase()]);
-        log(`Room ${roomId} deleted from DB.`);
-    } catch (err) {
-        log(`Error deleting room ${roomId} from DB:`, err);
-    } finally {
-        client.release();
-    }
+  const client = await pool.connect();
+  try {
+    await client.query('DELETE FROM rooms WHERE room_id = $1', [roomId.toUpperCase()]);
+    log(`Room ${roomId} deleted from DB.`);
+  } catch (err) {
+    log(`Error deleting room ${roomId} from DB:`, err);
+  } finally {
+    client.release();
+  }
 };
 
 // --- ヘルパー関数 ---
@@ -267,11 +285,11 @@ io.on('connection', (socket: Socket) => {
     socket.join(roomId);
     socket.data.roomId = roomId;
     log(`Room created: ${roomId} by ${username} (userId: ${userId})`);
-    
+
     socket.emit('roomCreated', {
-        ...newRoom,
-        yourPlayer: master,
-        roomId: newRoom.id,
+      ...newRoom,
+      yourPlayer: master,
+      roomId: newRoom.id,
     });
   });
 
@@ -304,9 +322,9 @@ io.on('connection', (socket: Socket) => {
     socket.data.roomId = upperRoomId;
 
     socket.emit('roomJoined', {
-        ...room,
-        yourPlayer: room.players.find(p => p.userId === userId),
-        roomId: room.id,
+      ...room,
+      yourPlayer: room.players.find(p => p.userId === userId),
+      roomId: room.id,
     });
 
     io.to(upperRoomId).emit('updatePlayers', { players: room.players });
@@ -337,7 +355,7 @@ io.on('connection', (socket: Socket) => {
       }
     } else {
       if (currentSelections[characterId] && currentSelections[characterId] !== userId) {
-        return; 
+        return;
       }
       for (const charId in currentSelections) {
         if (currentSelections[charId] === userId) {
@@ -346,7 +364,7 @@ io.on('connection', (socket: Socket) => {
       }
       currentSelections[characterId] = userId;
     }
-    
+
     await saveRoomToDB(room);
     io.to(roomId).emit('characterSelectionUpdated', currentSelections);
     log(`Room ${roomId}: Character selection updated by ${userId}`, currentSelections);
@@ -375,12 +393,12 @@ io.on('connection', (socket: Socket) => {
         }
         return { ...player, skills: [] };
       });
-      
+
       await saveRoomToDB(room);
       log(`Characters confirmed in room: ${roomId}. Phase: ${room.gamePhase}`);
-      io.to(roomId).emit('charactersConfirmed', { 
+      io.to(roomId).emit('charactersConfirmed', {
         gamePhase: room.gamePhase,
-        readingTimerEndTime: endTime 
+        readingTimerEndTime: endTime
       });
       io.to(roomId).emit('updatePlayers', { players: room.players });
     }
@@ -401,7 +419,7 @@ io.on('connection', (socket: Socket) => {
     const room = await getRoomFromDB(roomId);
     if (room && room.masterUserId === userId) {
       room.gamePhase = 'firstDiscussion';
-      room.readingTimerEndTime = null; 
+      room.readingTimerEndTime = null;
       await saveRoomToDB(room);
       log(`Proceeding to first discussion in room: ${roomId}. Phase: ${room.gamePhase}`);
       io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
@@ -427,11 +445,11 @@ io.on('connection', (socket: Socket) => {
       phase: phase,
       endState: 'none',
     };
-    const logMessage = phase === 'firstDiscussion' 
+    const logMessage = phase === 'firstDiscussion'
       ? '第一議論フェイズが開始しました。'
       : '第二議論フェイズが開始しました。';
     addLogToRoom(room, 'phase-start', logMessage);
-    
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: ${phase} timer started.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
@@ -444,7 +462,7 @@ io.on('connection', (socket: Socket) => {
     const remainingTime = room.discussionTimer.endTime - Date.now();
     room.discussionTimer.isTicking = false;
     room.discussionTimer.endTime = remainingTime;
-    
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: Discussion timer paused by ${userId}.`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
@@ -492,8 +510,8 @@ io.on('connection', (socket: Socket) => {
     } else if (room.discussionTimer.phase === 'secondDiscussion') {
       room.gamePhase = 'voting';
     }
-    room.discussionTimer = { endTime: null, isTicking: false, phase: null, endState: 'none' }; 
-    
+    room.discussionTimer = { endTime: null, isTicking: false, phase: null, endState: 'none' };
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: Discussion ended by master. New phase: ${room.gamePhase}`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
@@ -503,7 +521,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('getCard', async ({ roomId, userId, cardId }: { roomId: string, userId: string, cardId: string }) => {
     const room = await getRoomFromDB(roomId);
     if (!room || (room.gamePhase !== 'firstDiscussion' && room.gamePhase !== 'secondDiscussion')) return;
-    
+
     const player = room.players.find(p => p.userId === userId);
     const card = room.infoCards.find(c => c.id === cardId);
     if (!player || !card || card.owner) return;
@@ -527,7 +545,7 @@ io.on('connection', (socket: Socket) => {
     const character = scenarioData.characters.find((c: any) => room.characterSelections[c.id] === userId);
     const characterName = character ? character.name : '不明なキャラクター';
     addLogToRoom(room, 'card-get', `${characterName}が「${card.name}」を取得しました。`);
-    
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: Card "${card.name}" taken by user ${userId}. Count for ${phaseKey}: ${player.acquiredCardCount[phaseKey]}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
@@ -539,10 +557,10 @@ io.on('connection', (socket: Socket) => {
     if (!room) return;
     const card = room.infoCards.find(c => c.id === cardId);
     if (!card || card.owner !== userId) return;
-    
+
     card.isPublic = true;
     addLogToRoom(room, 'card-public', `「${card.name}」が全体公開されました。`);
-    
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: Card "${card.name}" made public by user ${userId}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
@@ -564,7 +582,7 @@ io.on('connection', (socket: Socket) => {
 
     card.owner = targetUserId;
     addLogToRoom(room, 'card-transfer', `「${card.name}」が${originalOwnerCharacterName}から${targetCharacterName}に譲渡されました。`);
-    
+
     await saveRoomToDB(room);
     log(`Room ${roomId}: Card "${card.name}" transferred from ${userId} to ${targetUserId}`);
     io.to(roomId).emit('infoCardsUpdated', room.infoCards);
@@ -624,7 +642,7 @@ io.on('connection', (socket: Socket) => {
       });
       return { ...p, skills: newSkills };
     });
-    
+
     await saveRoomToDB(room);
     io.to(roomId).emit('updatePlayers', { players: room.players });
   });
@@ -639,7 +657,7 @@ io.on('connection', (socket: Socket) => {
 
     const pcPlayers = room.players.filter(p => {
       const charId = Object.keys(room.characterSelections).find(key => room.characterSelections[key] === p.userId);
-      return charId && scenarioData.characters.find((c:any) => c.id === charId)?.type === 'PC';
+      return charId && scenarioData.characters.find((c: any) => c.id === charId)?.type === 'PC';
     });
 
     if (Object.keys(room.votes).length === pcPlayers.length) {
@@ -684,36 +702,36 @@ io.on('connection', (socket: Socket) => {
     log(`A user disconnected: ${socket.id}`);
     const roomId = socket.data.roomId;
     if (!roomId) {
-        return;
+      return;
     }
 
     const room = await getRoomFromDB(roomId);
     if (!room) {
-        return;
+      return;
     }
 
     const player = room.players.find(p => p.id === socket.id);
     if (player) {
-        player.connected = false;
-        log(`Player ${player.name} (userId: ${player.userId}) disconnected from room: ${roomId}`);
-        
-        const allDisconnected = room.players.every(p => !p.connected);
-        if (allDisconnected) {
-            log(`All players disconnected in room ${roomId}. Scheduling deletion.`);
-            setTimeout(async () => {
-                const currentRoom = await getRoomFromDB(roomId);
-                if (currentRoom && currentRoom.players.every(p => !p.connected)) {
-                    log(`Deleting room ${roomId} due to all players being disconnected.`);
-                    await deleteRoomFromDB(roomId);
-                }
-            }, 10000);
-        } else {
-            await saveRoomToDB(room);
-            io.to(room.id).emit('updatePlayers', {
-                players: room.players,
-                masterUserId: room.masterUserId
-            });
-        }
+      player.connected = false;
+      log(`Player ${player.name} (userId: ${player.userId}) disconnected from room: ${roomId}`);
+
+      const allDisconnected = room.players.every(p => !p.connected);
+      if (allDisconnected) {
+        log(`All players disconnected in room ${roomId}. Scheduling deletion.`);
+        setTimeout(async () => {
+          const currentRoom = await getRoomFromDB(roomId);
+          if (currentRoom && currentRoom.players.every(p => !p.connected)) {
+            log(`Deleting room ${roomId} due to all players being disconnected.`);
+            await deleteRoomFromDB(roomId);
+          }
+        }, 10000);
+      } else {
+        await saveRoomToDB(room);
+        io.to(room.id).emit('updatePlayers', {
+          players: room.players,
+          masterUserId: room.masterUserId
+        });
+      }
     }
   });
 });
@@ -761,7 +779,7 @@ setInterval(async () => {
     log('Running room cleanup job...');
     const timeout = new Date(Date.now() - ROOM_INACTIVITY_TIMEOUT_MS);
     const res = await client.query('SELECT room_id FROM rooms WHERE last_activity_at < $1', [timeout]);
-    
+
     for (const row of res.rows) {
       const roomId = row.room_id;
       log(`Room ${roomId} is inactive for too long. Deleting.`);

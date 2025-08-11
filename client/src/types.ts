@@ -144,3 +144,20 @@ export interface GameLogEntry {
   type: string;
   message: string;
 }
+
+// ゲームフェーズ
+export type GamePhase =
+  'splash' |
+  'start' |
+  'waiting' |
+  'introduction' |
+  'synopsis' |
+  'characterSelect' |
+  'commonInfo' |
+  'individualStory' |
+  'firstDiscussion' |
+  'interlude' |
+  'secondDiscussion' |
+  'voting' |
+  'ending' |
+  'debriefing';

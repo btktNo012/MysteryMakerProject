@@ -13,7 +13,7 @@ import DiscussionScreen from './screens/DiscussionScreen';
 import VotingScreen from './screens/VotingScreen';
 import EndingScreen from './screens/EndingScreen';
 import DebriefingScreen from './screens/DebriefingScreen';
-import { type ScenarioData, type Player, type CharacterSelections, type InfoCard, type DiscussionTimer, type VoteState, type VoteResult, type SkillInfoData, type GameLogEntry } from './types';
+import { type ScenarioData, type Player, type CharacterSelections, type InfoCard, type DiscussionTimer, type VoteState, type VoteResult, type SkillInfoData, type GameLogEntry, type GamePhase } from './types';
 import { type TabItem } from './components/Tabs';
 import { useSkills } from './hooks/useSkills';
 import TextRenderer from './components/TextRenderer';
@@ -21,22 +21,9 @@ import Timer from './components/Timer';
 import AppModals from './components/AppModals';
 import './style.css';
 import SkillOverlay from './components/SkillOverlay';
-
-type GamePhase =
-  'splash' |
-  'start' |
-  'waiting' |
-  'introduction' |
-  'synopsis' |
-  'characterSelect' |
-  'commonInfo' |
-  'individualStory' |
-  'firstDiscussion' |
-  'interlude' |
-  'secondDiscussion' |
-  'voting' |
-  'ending' |
-  'debriefing';
+import Breadcrumbs from './components/Breadcrumbs';
+import * as socketService from './socketService';
+import { type SocketEventHandlers } from './socketService';
 
 // --- モーダル管理用Reducer ---
 type ModalType =
@@ -144,13 +131,8 @@ function App() {
 
   // --- スキルモーダルで「YES」が押された時の処理 ---
   const handleConfirmSkillUse = () => {
-    if (skillConfirmModal.card && activeSkillState.skillId) {
-      socket?.emit('useActiveSkill', {
-        roomId,
-        userId,
-        skillId: activeSkillState.skillId,
-        payload: { targetCardId: skillConfirmModal.card.id }
-      });
+    if (socket && skillConfirmModal.card && activeSkillState.skillId) {
+      socketService.emitUseActiveSkill(socket, roomId, userId, activeSkillState.skillId, { targetCardId: skillConfirmModal.card.id });
     }
     // モーダルを閉じ、スキル状態をリセット
     setSkillConfirmModal({ card: null });
@@ -172,140 +154,65 @@ function App() {
     const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
     setSocket(newSocket);
 
-    // 3. 接続後の処理
+    // 3. イベントハンドラをまとめる
+    const handlers: SocketEventHandlers = {
+      setGamePhase,
+      setRoomId,
+      setPlayers,
+      setMyPlayer,
+      setErrorMessage,
+      setMaxPlayers,
+      setCharacterSelections,
+      setInfoCards,
+      setDiscussionTimer,
+      setVoteState,
+      setVoteResult,
+      setGameLog,
+      setReadingTimerEndTime,
+      setSelectedCharacterId,
+      dispatchModal,
+      handleRoomClosed: () => {
+        setGamePhase('start');
+        setRoomId('');
+        setPlayers([]);
+        setMyPlayer(null);
+        setCharacterSelections({});
+        setSelectedCharacterId(null);
+        setReadingTimerEndTime(null);
+        setInfoCards([]);
+        setDiscussionTimer({ endTime: null, isTicking: false, phase: null, endState: 'none' });
+        setVoteState({});
+        setVoteResult(null);
+        setGameLog([]);
+        localStorage.removeItem('roomId');
+      },
+    };
+
+    // 4. サーバーからのイベントリスナーを登録
+    socketService.registerEventListeners(newSocket, handlers);
+
+    // 5. App.tsxに固有、またはRefに依存するリスナーのみここに残す
+    // 接続成功
     newSocket.on('connect', () => {
       console.log('Connected to server with socket ID:', newSocket.id);
-      // 4. ゲーム復帰処理
       const storedRoomId = localStorage.getItem('roomId');
-      const storedUsername = localStorage.getItem('username'); // 復帰にはusernameも必要
+      const storedUsername = localStorage.getItem('username');
       if (storedRoomId && storedUserId && storedUsername) {
         console.log(`Attempting to rejoin room ${storedRoomId} as ${storedUsername}`);
-        newSocket.emit('joinRoom', {
-          roomId: storedRoomId,
-          userId: storedUserId, // ステートではなくローカル変数を使う
-          username: storedUsername
-        });
+        socketService.emitJoinRoom(newSocket, storedUsername, storedUserId, storedRoomId);
       }
     });
 
-    // --- サーバーからのイベントリスナー ---
-
-    // ルーム作成完了
-    newSocket.on('roomCreated', (data) => {
-      console.log('Room created:', data);
-      setRoomId(data.roomId);
-      setPlayers(data.players);
-      setMyPlayer(data.yourPlayer);
-      setMaxPlayers(data.maxPlayers);
-      setCharacterSelections(data.characterSelections);
-      setInfoCards(data.infoCards);
-      setDiscussionTimer(data.discussionTimer);
-      setVoteState(data.votes);
-      setVoteResult(data.voteResult);
-      setGameLog(data.gameLog);
-      setGamePhase(data.gamePhase);
-      dispatchModal({ type: 'CLOSE', modal: 'createRoom' });
-      localStorage.setItem('roomId', data.roomId);
-    });
-
-    // ルーム参加・復帰完了
-    newSocket.on('roomJoined', (data) => {
-      console.log('Room joined:', data);
-      setRoomId(data.roomId);
-      setPlayers(data.players);
-      setMyPlayer(data.yourPlayer);
-      setMaxPlayers(data.maxPlayers);
-      setCharacterSelections(data.characterSelections);
-      setInfoCards(data.infoCards);
-      setDiscussionTimer(data.discussionTimer);
-      setVoteState(data.votes);
-      setVoteResult(data.voteResult);
-      setGameLog(data.gameLog);
-      setGamePhase(data.gamePhase);
-      setReadingTimerEndTime(data.readingTimerEndTime);
-      dispatchModal({ type: 'CLOSE', modal: 'findRoom' });
-      dispatchModal({ type: 'CLOSE', modal: 'expMurder' });
-      localStorage.setItem('roomId', data.roomId);
-    });
-
-    // プレイヤー情報更新
+    // プレイヤー情報の更新
     newSocket.on('updatePlayers', (data: { players: Player[] }) => {
       setPlayers(data.players);
-
-      // 自分のプレイヤー情報も更新 (refを使って最新のuserIdを参照する)
       const me = data.players.find((p: Player) => p.userId === userIdRef.current);
       if (me) {
         setMyPlayer(me);
-      } else {
-        console.log('Could not find myPlayer in update.');
       }
     });
 
-    // ゲームフェーズ変更
-    newSocket.on('gamePhaseChanged', (newPhase) => {
-      console.log('Game phase changed to:', newPhase);
-      setGamePhase(newPhase);
-      if (newPhase === 'firstDiscussion') {
-        dispatchModal({ type: 'CLOSE', modal: 'hoReadForcedEnd' });
-        dispatchModal({ type: 'CLOSE', modal: 'hoReadEnd' });
-        setReadingTimerEndTime(null);
-      }
-      if (newPhase === 'debriefing') {
-        setReadingTimerEndTime(null);
-      }
-    });
-
-    // キャラクター選択状況更新
-    newSocket.on('characterSelectionUpdated', setCharacterSelections);
-
-    // 情報カード更新
-    newSocket.on('infoCardsUpdated', (updatedInfoCards) => {
-      console.log('Info cards updated');
-      setInfoCards(updatedInfoCards);
-    });
-
-    // ゲームログ更新
-    newSocket.on('gameLogUpdated', (log) => {
-      console.log('Game log updated');
-      setGameLog(log);
-    });
-
-    // 議論タイマー更新
-    newSocket.on('discussionTimerUpdated', (timer) => {
-      console.log('Discussion timer updated', timer);
-      setDiscussionTimer(timer);
-    });
-
-    // 投票状況更新
-    newSocket.on('voteStateUpdated', (votes) => {
-      console.log('Vote state updated', votes);
-      setVoteState(votes);
-    });
-
-    // 決選投票
-    newSocket.on('voteTied', () => {
-      console.log('Vote tied, re-voting required.');
-      dispatchModal({ type: 'OPEN', modal: 'voteTied' });
-      setVoteState({}); // 投票状況をリセット
-    });
-
-    // 投票結果確定（モーダル表示用）
-    newSocket.on('voteResultFinalized', ({ result, votes }) => {
-      console.log('Vote result finalized', result);
-      setVoteResult(result);
-      setVoteState(votes);
-      dispatchModal({ type: 'OPEN', modal: 'voteResult' }); // モーダルを表示
-    });
-
-    // 投票結果確定
-    newSocket.on('voteResultConfirmed', ({ result, votes }) => {
-      console.log('Vote result confirmed', result);
-      setVoteResult(result);
-      setVoteState(votes);
-      // gamePhaseの変更はgamePhaseChangedイベントで処理
-    });
-
-    // キャラクター選択確定
+    // キャラクター確定
     newSocket.on('charactersConfirmed', ({ gamePhase, readingTimerEndTime }) => {
       console.log('Characters confirmed');
       const currentSelections = characterSelectionsRef.current;
@@ -317,45 +224,13 @@ function App() {
       setGamePhase(gamePhase);
     });
 
-    // HOタイマー延長
-    newSocket.on('readingTimeExtended', ({ endTime }) => {
-      setReadingTimerEndTime(endTime);
-      dispatchModal({ type: 'CLOSE', modal: 'hoReadEnd' });
-    });
-
-    // エラーハンドリング
-    newSocket.on('roomNotFound', () => {
-      setErrorMessage('ルームが見つかりません。');
-      localStorage.removeItem('roomId'); // 見つからない場合はlocalStorageから削除
-    });
-    newSocket.on('roomFull', () => setErrorMessage('そのルームは満員です。'));
-
+    // カード取得時エラー
     newSocket.on('getCardError', ({ message }: { message: string }) => {
       setGetCardErrorMessage(message);
       dispatchModal({ type: 'OPEN', modal: 'getCardError' });
     });
 
-    // ルーム解散
-    newSocket.on('roomClosed', () => {
-      console.log('Room closed by server');
-      // 状態をリセット
-      setGamePhase('start');
-      setRoomId('');
-      setPlayers([]);
-      setMyPlayer(null);
-      setCharacterSelections({});
-      setSelectedCharacterId(null);
-      setReadingTimerEndTime(null);
-      setInfoCards([]);
-      setDiscussionTimer({ endTime: null, isTicking: false, phase: null, endState: 'none' });
-      setVoteState({});
-      setVoteResult(null);
-      setGameLog([]);
-      // localStorageからroomIdを削除
-      localStorage.removeItem('roomId');
-    });
-
-    // クリーンアップ
+    // 6. クリーンアップ
     return () => {
       console.log('Disconnecting socket...');
       newSocket.disconnect();
@@ -409,19 +284,22 @@ function App() {
 
   // --- イベントハンドラ ---
   const handleCreateRoom = () => {
+    if (!socket) return;
     if (username.trim() === '') return setErrorMessage('ユーザー名を入力してください。');
     localStorage.setItem('username', username);
-    socket?.emit('createRoom', { username, userId });
+    socketService.emitCreateRoom(socket, username, userId);
   };
 
   const handleJoinRoom = () => {
+    if (!socket) return;
     if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
     localStorage.setItem('username', username);
-    socket?.emit('joinRoom', { username, userId, roomId });
+    socketService.emitJoinRoom(socket, username, userId, roomId);
   };
 
   const handleLeaveRoom = () => {
-    socket?.emit('leaveRoom', { roomId, userId });
+    if (!socket) return;
+    socketService.emitLeaveRoom(socket, roomId, userId);
     // 状態をリセット
     setGamePhase('start');
     setRoomId('');
@@ -436,47 +314,94 @@ function App() {
 
   const handleCloseRoom = () => dispatchModal({ type: 'OPEN', modal: 'confirmCloseRoom' });
   const handleConfirmCloseRoom = () => {
-    socket?.emit('closeRoom', { roomId, userId });
+    if (!socket) return;
+    socketService.emitCloseRoom(socket, roomId, userId);
     dispatchModal({ type: 'CLOSE', modal: 'confirmCloseRoom' });
   }
-  const handleStartGame = () => socket?.emit('startGame', { roomId, userId });
-  const handleCharacterSelect = (characterId: string | null) => socket?.emit('selectCharacter', { roomId, userId, characterId });
+  const handleStartGame = () => {
+    if (!socket) return;
+    socketService.emitStartGame(socket, roomId, userId);
+  }
+  const handleCharacterSelect = (characterId: string | null) => {
+    if (!socket) return;
+    socketService.emitSelectCharacter(socket, roomId, userId, characterId);
+  }
   const handleCharacterConfirm = () => {
+    if (!socket) return;
     dispatchModal({ type: 'CLOSE', modal: 'characterSelectConfirm' });
-    socket?.emit('confirmCharacters', { roomId, userId })
+    socketService.emitConfirmCharacters(socket, roomId, userId);
   };
-  const handleExtendTimer = () => socket?.emit('extendReadingTimer', { roomId, userId });
-  const handleProceedToDiscussion = () => socket?.emit('proceedToFirstDiscussion', { roomId, userId });
+  const handleExtendTimer = () => {
+    if (!socket) return;
+    socketService.emitExtendReadingTimer(socket, roomId, userId);
+  }
+  const handleProceedToDiscussion = () => {
+    if (!socket) return;
+    socketService.emitProceedToFirstDiscussion(socket, roomId, userId);
+  }
 
   // 情報カード操作ハンドラ
-  const handleGetCard = (cardId: string) => socket?.emit('getCard', { roomId, userId, cardId });
-  const handleMakeCardPublic = (cardId: string) => socket?.emit('makeCardPublic', { roomId, userId, cardId });
-  const handleTransferCard = (cardId: string, targetUserId: string) => socket?.emit('transferCard', { roomId, userId, cardId, targetUserId });
+  const handleGetCard = (cardId: string) => {
+    if (!socket) return;
+    socketService.emitGetCard(socket, roomId, userId, cardId);
+  }
+  const handleMakeCardPublic = (cardId: string) => {
+    if (!socket) return;
+    socketService.emitMakeCardPublic(socket, roomId, userId, cardId);
+  }
+  const handleTransferCard = (cardId: string, targetUserId: string) => {
+    if (!socket) return;
+    socketService.emitTransferCard(socket, roomId, userId, cardId, targetUserId);
+  }
 
   // 議論タイマー操作ハンドラ
-  const handleStartDiscussionTimer = (phase: 'firstDiscussion' | 'secondDiscussion', durationSeconds: number) => socket?.emit('startDiscussionTimer', { roomId, userId, phase, durationSeconds });
-  const handlePauseDiscussionTimer = () => socket?.emit('pauseDiscussionTimer', { roomId, userId });
-  const handleResumeDiscussionTimer = () => socket?.emit('resumeDiscussionTimer', { roomId, userId });
-  const handleRequestEndDiscussion = () => socket?.emit('requestEndDiscussion', { roomId, userId });
-  const handleCancelEndDiscussion = () => socket?.emit('cancelEndDiscussion', { roomId, userId });
-  const handleConfirmEndDiscussion = () => socket?.emit('confirmEndDiscussion', { roomId, userId });
+  const handleStartDiscussionTimer = (phase: 'firstDiscussion' | 'secondDiscussion', durationSeconds: number) => {
+    if (!socket) return;
+    socketService.emitStartDiscussionTimer(socket, roomId, userId, phase, durationSeconds);
+  }
+  const handlePauseDiscussionTimer = () => {
+    if (!socket) return;
+    socketService.emitPauseDiscussionTimer(socket, roomId, userId);
+  }
+  const handleResumeDiscussionTimer = () => {
+    if (!socket) return;
+    socketService.emitResumeDiscussionTimer(socket, roomId, userId);
+  }
+  const handleRequestEndDiscussion = () => {
+    if (!socket) return;
+    socketService.emitRequestEndDiscussion(socket, roomId, userId);
+  }
+  const handleCancelEndDiscussion = () => {
+    if (!socket) return;
+    socketService.emitCancelEndDiscussion(socket, roomId, userId);
+  }
+  const handleConfirmEndDiscussion = () => {
+    if (!socket) return;
+    socketService.emitConfirmEndDiscussion(socket, roomId, userId);
+  }
 
   // 投票ハンドラ
-  const handleSubmitVote = (votedCharacterId: string) => socket?.emit('submitVote', { roomId, userId, votedCharacterId });
+  const handleSubmitVote = (votedCharacterId: string) => {
+    if (!socket) return;
+    socketService.emitSubmitVote(socket, roomId, userId, votedCharacterId);
+  }
   const handleProceedToEnding = () => {
-    socket?.emit('changeGamePhase', { roomId, newPhase: 'ending' });
+    if (!socket) return;
+    socketService.emitChangeGamePhase(socket, roomId, 'ending');
     setGamePhase('ending');
     dispatchModal({ type: 'CLOSE', modal: 'voteResult' }); // モーダルを閉じる
   }
 
   // エンディング・感想戦ハンドラ
   const handleProceedToDebriefing = () => {
-    socket?.emit('changeGamePhase', { roomId, newPhase: 'debriefing' });
+    if (!socket) return;
+    socketService.emitChangeGamePhase(socket, roomId, 'debriefing');
     setGamePhase('debriefing');
   }
 
   const handleProceedToSecondDiscussion = () => {
-    socket?.emit('changeGamePhase', { roomId, newPhase: 'secondDiscussion' });
+    if (!socket) return;
+    socketService.emitChangeGamePhase(socket, roomId, 'secondDiscussion');
     setGamePhase('secondDiscussion');
   };
 
@@ -621,6 +546,20 @@ function App() {
     }
   };
 
+  const phasesToShowBreadcrumbs: GamePhase[] = [
+    'introduction',
+    'synopsis',
+    'characterSelect',
+    'commonInfo',
+    'individualStory',
+    'firstDiscussion',
+    'interlude',
+    'secondDiscussion',
+    'voting',
+    'ending',
+    'debriefing',
+  ];
+
   return (
     <div className="App">
       {shouldShowReadingTimer && remainingTime > 0 && (
@@ -638,6 +577,7 @@ function App() {
           onCancel={handleCancelSkill}
         />
       )}
+      {phasesToShowBreadcrumbs.includes(gamePhase) && <Breadcrumbs currentPhase={gamePhase} />}
       {renderScreen()}
 
       <AppModals

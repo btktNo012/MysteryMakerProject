@@ -107,10 +107,3 @@
 .char-selector.npc {
     color: #000;
 }
-
-.navigation-area {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}

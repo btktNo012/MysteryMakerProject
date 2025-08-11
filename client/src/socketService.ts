@@ -126,14 +126,6 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     handlers.dispatchModal({ type: 'OPEN', modal: 'voteResult' }); // モーダルを表示
   });
 
-  // キャラクター選択確定
-  socket.on('charactersConfirmed', ({ gamePhase, readingTimerEndTime }) => {
-    console.log('Characters confirmed');
-    // このロジックはcharacterSelectionsRefに依存するため、App.tsx側で処理するのが望ましい
-    handlers.setReadingTimerEndTime(readingTimerEndTime);
-    handlers.setGamePhase(gamePhase);
-  });
-
   // HOタイマー延長
   socket.on('readingTimeExtended', ({ endTime }) => {
     handlers.setReadingTimerEndTime(endTime);
@@ -147,10 +139,6 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
   });
   socket.on('roomFull', () => handlers.setErrorMessage('そのルームは満員です。'));
 
-//  socket.on('getCardError', ({ message }: { message: string }) => {
-//    // この処理はgetCardErrorMessageという別のstateに依存するため、App.tsxで処理
-//  });
-
   // ルーム解散
   socket.on('roomClosed', () => {
     console.log('Room closed by server');
@@ -161,86 +149,112 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
 
 // --- イベント送信 (Emitters) ---
 
+// ルーム作成
 export const emitCreateRoom = (socket: Socket, username: string, userId: string) => {
   socket.emit('createRoom', { username, userId });
 };
 
+// ルーム入室
 export const emitJoinRoom = (socket: Socket, username: string, userId: string, roomId: string) => {
   socket.emit('joinRoom', { username, userId, roomId });
 };
 
+// ルーム退室
 export const emitLeaveRoom = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('leaveRoom', { roomId, userId });
 };
 
+// ルーム解散
 export const emitCloseRoom = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('closeRoom', { roomId, userId });
 };
 
+// ゲーム開始
 export const emitStartGame = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('startGame', { roomId, userId });
 };
 
+// キャラクター選択
 export const emitSelectCharacter = (socket: Socket, roomId: string, userId: string, characterId: string | null) => {
   socket.emit('selectCharacter', { roomId, userId, characterId });
 };
 
+// キャラクター確定
 export const emitConfirmCharacters = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('confirmCharacters', { roomId, userId });
 };
 
+// タイマー延長
 export const emitExtendReadingTimer = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('extendReadingTimer', { roomId, userId });
 };
 
+// 第一議論フェイズ終了
 export const emitProceedToFirstDiscussion = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('proceedToFirstDiscussion', { roomId, userId });
 };
 
+// 情報カード取得
 export const emitGetCard = (socket: Socket, roomId: string, userId: string, cardId: string) => {
   socket.emit('getCard', { roomId, userId, cardId });
 };
 
+// 情報カード全体公開
 export const emitMakeCardPublic = (socket: Socket, roomId: string, userId: string, cardId: string) => {
   socket.emit('makeCardPublic', { roomId, userId, cardId });
 };
 
+// 情報カード譲渡
 export const emitTransferCard = (socket: Socket, roomId: string, userId: string, cardId: string, targetUserId: string) => {
   socket.emit('transferCard', { roomId, userId, cardId, targetUserId });
 };
 
+// 議論タイマー開始
 export const emitStartDiscussionTimer = (socket: Socket, roomId: string, userId: string, phase: 'firstDiscussion' | 'secondDiscussion', durationSeconds: number) => {
   socket.emit('startDiscussionTimer', { roomId, userId, phase, durationSeconds });
 };
 
+// 議論タイマー一時停止
 export const emitPauseDiscussionTimer = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('pauseDiscussionTimer', { roomId, userId });
 };
 
+// 議論タイマー再開
 export const emitResumeDiscussionTimer = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('resumeDiscussionTimer', { roomId, userId });
 };
 
+// 議論強制終了
 export const emitRequestEndDiscussion = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('requestEndDiscussion', { roomId, userId });
 };
 
+// 議論強制終了の中止
 export const emitCancelEndDiscussion = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('cancelEndDiscussion', { roomId, userId });
 };
 
+// 議論フェイズ終了確定
 export const emitConfirmEndDiscussion = (socket: Socket, roomId: string, userId: string) => {
   socket.emit('confirmEndDiscussion', { roomId, userId });
 };
 
+// 投票
 export const emitSubmitVote = (socket: Socket, roomId: string, userId: string, votedCharacterId: string) => {
   socket.emit('submitVote', { roomId, userId, votedCharacterId });
 };
 
+// フェーズ移行
 export const emitChangeGamePhase = (socket: Socket, roomId: string, newPhase: GamePhase) => {
   socket.emit('changeGamePhase', { roomId, newPhase });
 };
 
+// スキル使用
 export const emitUseActiveSkill = (socket: Socket, roomId: string, userId: string, skillId: string, payload: any) => {
   socket.emit('useActiveSkill', { roomId, userId, skillId, payload });
+};
+
+// 準備中/準備完了の設定
+export const emitSetStandBy = (socket: Socket, roomId: string, userId: string, value: boolean) => {
+  socket.emit('setStandBy', { roomId, userId, value });
 };

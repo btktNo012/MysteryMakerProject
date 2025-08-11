@@ -5,11 +5,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh; /* 画面の高さいっぱいに広げる */
-  background-color: #282c34; /* 背景色を少し暗めに */
   color: white;
   text-align: center;
   opacity: 0; /* 初期状態は透明 */
+  margin: auto; /* flexコンテナ内で中央寄せにする */
+  padding: 3rem;
+  border-radius: 16px;
 
   /* fadeIn アニメーションを適用 */
   animation: fadeIn 2s ease-out forwards;

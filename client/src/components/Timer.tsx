@@ -4,7 +4,7 @@ import './Timer.css';
 
 // Timerコンポーネントが受け取るPropsの型定義
 interface TimerProps {
-  initialSeconds: number; // 初期時間（秒）
+  initialSeconds: number; // 初期n時間（秒）
   isTicking: boolean;     // タイマーが作動中か (true: 作動, false: 一時停止)
   onTimeUp: () => void;   // 時間がゼロになったときに呼び出される関数
   resetTrigger?: any;      // この値が変わるとタイマーがリセットされる

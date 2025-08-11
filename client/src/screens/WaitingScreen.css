@@ -2,9 +2,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */ /* 上下中央揃えを解除 */
   padding: 40px;
   text-align: center;
+  margin: 0 auto; /* 上下マージン0、左右は自動で中央揃え */
+  width: 100%;
+  max-width: 600px; /* コンテナの最大幅を指定 */
 }
 .player-list {
   margin: 20px 0;

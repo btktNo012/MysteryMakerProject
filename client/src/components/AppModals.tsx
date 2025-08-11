@@ -1,6 +1,7 @@
 
 // src/components/AppModals.tsx
 import Modal from './Modal';
+import TextRenderer from './TextRenderer';
 import { type Player, type ScenarioData, type VoteResult } from '../types';
 
 // --- モーダル管理用Reducer ---
@@ -8,6 +9,7 @@ type ModalType =
   'createRoom' |
   'findRoom' |
   'expMurder' |
+  'howto' |
   'hoReadEnd' |
   'hoReadForcedEnd' |
   'voteResult' |
@@ -34,6 +36,7 @@ interface AppModalsProps {
   roomId: string;
   errorMessage: string | null;
   skillMessage: string;
+  currentPhase: string;
 
   // Handlers
   dispatchModal: React.Dispatch<ModalAction>;
@@ -60,6 +63,7 @@ const AppModals: React.FC<AppModalsProps> = ({
   roomId,
   errorMessage,
   skillMessage,
+  currentPhase,
   dispatchModal,
   handleCharacterConfirm,
   handleProceedToDiscussion,
@@ -75,6 +79,28 @@ const AppModals: React.FC<AppModalsProps> = ({
 }) => {
   return (
     <>
+      {/* 画面の説明モーダル */}
+      <Modal
+        isOpen={modalState.howto}
+        message={"この画面について"}
+        onClose={() => dispatchModal({ type: 'CLOSE', modal: 'howto' })}
+        closeButtonText="閉じる"
+      >
+        <div className="modal-message">
+          {currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion' ? (
+            scenario ? <TextRenderer filePath={scenario.discussionPhaseSettings.howto} /> : null
+          ) : (
+            <>
+              {currentPhase === 'introduction' && <p>この画面では、ゲームのイントロダクション（導入）を表示します。</p>}
+              {currentPhase === 'synopsis' && <p>この画面では、物語のあらすじを確認します。</p>}
+              {currentPhase === 'commonInfo' && <p>この画面では、全員共通のハンドアウトを読みます。</p>}
+              {currentPhase === 'individualStory' && <p>この画面では、あなたのキャラクターの個別情報と目的を読みます。</p>}
+              {currentPhase === 'ending' && <p>投票結果に応じたエンディングを表示します。</p>}
+              {currentPhase === 'debriefing' && <p>あとがき、各キャラEND＆STORY、情報カードの振り返りを確認できます。</p>}
+            </>
+          )}
+        </div>
+      </Modal>
       <Modal
         isOpen={modalState.characterSelectConfirm}
         message="ハンドアウト読み込み画面に移動しますか？"

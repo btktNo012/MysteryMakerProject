@@ -2,31 +2,26 @@
 
 .discussion-screen {
     display: flex;
-    height: 100vh;
     overflow: hidden;
     position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .discussion-left-panel {
-    width: 68%;
+    width: 67%;
     padding: 20px;
     display: flex;
     flex-direction: column;
     z-index: 1;
 }
 
-.character-info-discussion h3 {
-    margin-top: 0;
-    border-bottom: 2px solid #333;
-    padding-bottom: 10px;
-}
-
 .info-cards-section {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
     /* flexアイテムの縮小を許可 */
+    flex-grow: 1;
 }
 
 .game-log-section {
@@ -103,15 +98,13 @@
 }
 
 .discussion-info-cards-list {
-    flex-grow: 0;
+    flex-grow: 1;
     overflow-y: auto;
     border: 1px solid #ddd;
     padding: 10px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px 2%;
-    /* カード間のスペース */
-    max-height: 80%;
 }
 
 .info-card {
@@ -216,7 +209,7 @@
     /* パネルの外側にタブが出るように調整 */
     top: 0px;
     width: 30px;
-    height: 100px;
+    height: 80px;
     background: #888;
     color: #fff;
     border-color: #666;
@@ -430,4 +423,7 @@
 
 .discuttion-map-image {
     width: 100%;
+}
+.discussion-header {
+    padding-bottom: 5px;
 }

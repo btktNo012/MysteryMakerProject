@@ -29,6 +29,7 @@ interface DiscussionScreenProps {
   onConfirmEnd: () => void; // 強制終了確定
   onUseSkill: (skillId: string | null) => void; // スキル使用
   gameLog: GameLogEntry[];
+  hideControls?: boolean; // フッター移行のため画面内のタイマー・操作を隠す
 }
 
 const evaluateConditions = (card: InfoCard, players: Player[], characterSelections: CharacterSelections): boolean => {
@@ -137,7 +138,8 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onCancelEnd,
   onConfirmEnd,
   onUseSkill,
-  gameLog
+  gameLog,
+  hideControls
 }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(discussionTime);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
@@ -287,12 +289,9 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   return (
     <div className="discussion-screen">
       <div className="discussion-left-panel">
-        <div className="character-info-discussion">
-          <h3>{character.name}</h3>
-        </div>
         {myPlayer.skills && myPlayer.skills.length > 0 && (
           <div className="skills-section">
-            <h4>スキル</h4>
+            <div className='discussion-header'>キャラクター：{character.name}のスキル</div>
             <ul className="skills-list">
               {myPlayer.skills.map((skill, index) => (
                 <li key={index} className={`skill-type-${skill.type}`}>
@@ -314,7 +313,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
           </div>)}
         <div className="info-cards-section">
           <div className="info-cards-header">
-            <h4>情報カード</h4>
+            <div className='discussion-header'>情報カード</div>
             <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
           </div>
           <div className="discussion-info-cards-list">
@@ -364,21 +363,12 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
           onClick={() => setIsRightPanelWide(w => !w)}
           aria-label={isRightPanelWide ? '縮小' : '拡大'}
         >
-          {isRightPanelWide ? '＞' : '＜'}
+          {isRightPanelWide ? '▶' : '◀'}
         </button>
-        <div className="goals-section">
-          <h4>あなたの目的</h4>
-          {character.goals && character.goals.length > 0 ? (
-            <ul>
-              {character.goals.map((goal, index) => (
-                <li key={index}>{goal.text} ({goal.points}点)<ul><li>{goal.hint}</li></ul></li>
-              ))}
-            </ul>
-          ) : <p>目的はありません。</p>}
-        </div>
         <div className="main-content">
           <Tabs items={allTabItems} />
         </div>
+        {!hideControls && (
         <div className="discussion-footer">
           <div className="timer-wrapper">
             <Timer
@@ -411,6 +401,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
             )}
           </div>
         </div>
+        )}
       </div>
 
       <Modal

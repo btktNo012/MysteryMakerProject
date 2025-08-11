@@ -7,11 +7,11 @@ interface BreadcrumbsProps {
 }
 
 const PHASES_ORDER: { id: GamePhase; name: string }[] = [
-  { id: 'introduction', name: '導入' },
+  { id: 'introduction', name: 'はじめに' },
   { id: 'synopsis', name: 'あらすじ' },
   { id: 'characterSelect', name: 'キャラクター選択' },
   { id: 'commonInfo', name: '共通情報' },
-  { id: 'individualStory', name: '個別HO' },
+  { id: 'individualStory', name: '個別ストーリー' },
   { id: 'firstDiscussion', name: '第一議論' },
   { id: 'interlude', name: '中間情報' },
   { id: 'secondDiscussion', name: '第二議論' },

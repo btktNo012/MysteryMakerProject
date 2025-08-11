@@ -17,11 +17,11 @@ import { type ScenarioData, type Player, type CharacterSelections, type InfoCard
 import { type TabItem } from './components/Tabs';
 import { useSkills } from './hooks/useSkills';
 import TextRenderer from './components/TextRenderer';
-import Timer from './components/Timer';
 import AppModals from './components/AppModals';
 import './style.css';
 import SkillOverlay from './components/SkillOverlay';
 import Breadcrumbs from './components/Breadcrumbs';
+import Footer from './components/Footer';
 import * as socketService from './socketService';
 import { type SocketEventHandlers } from './socketService';
 
@@ -30,6 +30,7 @@ type ModalType =
   'createRoom' |
   'findRoom' |
   'expMurder' |
+  'howto' |
   'hoReadForcedEnd' |
   'hoReadEnd' |
   'voteResult' |
@@ -48,6 +49,7 @@ const initialModalState: ModalState = {
   createRoom: false,
   findRoom: false,
   expMurder: false,
+  howto: false,
   hoReadForcedEnd: false,
   hoReadEnd: false,
   voteResult: false,
@@ -407,6 +409,9 @@ function App() {
 
 
   const shouldShowReadingTimer = gamePhase === 'commonInfo' || gamePhase === 'individualStory';
+  const discussionSeconds = (gamePhase === 'firstDiscussion' || gamePhase === 'secondDiscussion')
+    ? (scenario?.discussionPhaseSettings[gamePhase]?.timeLimit ?? 600)
+    : 600;
 
   const renderScreen = () => {
     if (gamePhase !== 'splash' && (!scenario || !skillInfo)) return <div>ゲームデータを読み込んでいます...</div>;
@@ -439,12 +444,12 @@ function App() {
       case 'splash': return <SplashScreen onNext={() => setGamePhase('start')} />;
       case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => dispatchModal({ type: 'OPEN', modal: 'createRoom' })} onFindRoom={() => dispatchModal({ type: 'OPEN', modal: 'findRoom' })} onExpMurder={() => dispatchModal({ type: 'OPEN', modal: 'expMurder' })} />;
       case 'waiting': return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={maxPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
-      case 'introduction': return <InfoDisplayScreen title="はじめに" filePath={scenario!.introductionFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('synopsis')} />;
-      case 'synopsis': return <InfoDisplayScreen title="あらすじ" filePath={scenario!.synopsisFile} onBackFlg={true} onBack={() => setGamePhase('introduction')} onNext={() => setGamePhase('characterSelect')} />;
-      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={() => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' })} players={players} />;
+      case 'introduction': return <InfoDisplayScreen filePath={scenario!.introductionFile} />;
+      case 'synopsis': return <InfoDisplayScreen filePath={scenario!.synopsisFile} />;
+      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={() => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' })} players={players} hideBack hideConfirm />;
       case 'commonInfo': return (
         <>
-          <InfoDisplayScreen title="ハンドアウト読み込み：共通情報" filePath={scenario!.commonInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={() => setGamePhase('individualStory')} />
+          <InfoDisplayScreen filePath={scenario!.commonInfo.textFile} />
         </>
       );
       case 'individualStory':
@@ -453,17 +458,31 @@ function App() {
           <>
             <IndividualStoryScreen
               character={selectedChar}
-              onBack={() => setGamePhase('commonInfo')}
-              onNext={() => dispatchModal({ type: 'OPEN', modal: 'hoReadForcedEnd' })}
-              isMaster={myPlayer?.isMaster || false} />
+              isMaster={myPlayer?.isMaster || false}
+            />
           </>
         );
       case 'firstDiscussion':
         if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
         const tabItems1: TabItem[] = [
-          { label: '遊び方', content: <TextRenderer filePath={scenario!.discussionPhaseSettings.howto} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
+          {
+            label: '目的',
+            content: selectedChar.goals ?
+              (
+                <div>
+                  {selectedChar.goals && selectedChar.goals.length > 0 ? (
+                    <ul className='goals-list'>
+                      {selectedChar.goals.map((goal, index) => (
+                        <li key={index}>{goal.text} ({goal.points}点)<ul className='goal-hint'><li>{goal.hint}</li></ul></li>
+                      ))}
+                    </ul>
+                  ) : <p>目的はありません。</p>}
+                </div>
+              )
+              : <div />
+          },
           { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
         return <DiscussionScreen
@@ -489,12 +508,12 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
+          hideControls
         />;
-      case 'interlude': return <InfoDisplayScreen title="中間情報" filePath={scenario!.intermediateInfo.textFile} onBackFlg={false} onBack={() => { }} onNext={handleProceedToSecondDiscussion} />;
+      case 'interlude': return <InfoDisplayScreen filePath={scenario!.intermediateInfo.textFile} />;
       case 'secondDiscussion':
         if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
         const tabItems2: TabItem[] = [
-          { label: '遊び方', content: <TextRenderer filePath={scenario!.discussionPhaseSettings.howto} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
           { label: '中間情報', content: <TextRenderer filePath={scenario!.intermediateInfo.textFile} /> },
@@ -523,6 +542,7 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
+          hideControls
         />;
       case 'voting':
         if (!myPlayer) return <div>プレイヤー情報がありません。</div>;
@@ -539,14 +559,13 @@ function App() {
         if (!targetEnding) return <div>対応するエンディングが見つかりません。</div>;
         return <EndingScreen
           ending={targetEnding}
-          onNext={handleProceedToDebriefing}
         />;
-      case 'debriefing': return <DebriefingScreen scenario={scenario!} infoCards={infoCards} players={players} isMaster={myPlayer?.isMaster || false} onCloseRoom={handleCloseRoom} />;
+      case 'debriefing': return <DebriefingScreen scenario={scenario!} infoCards={infoCards} players={players} gameLog={gameLog} />;
       default: return <SplashScreen onNext={() => setGamePhase('start')} />;
     }
   };
 
-  const phasesToShowBreadcrumbs: GamePhase[] = [
+  const phasesToShowHeaderFooter: GamePhase[] = [
     'introduction',
     'synopsis',
     'characterSelect',
@@ -560,13 +579,56 @@ function App() {
     'debriefing',
   ];
 
+  const operationButtonsForPhase = (): { label: string; onClick: () => void; disabled?: boolean }[] => {
+    switch (gamePhase) {
+      case 'introduction':
+        return [
+          { label: 'NEXT', onClick: () => setGamePhase('synopsis') },
+        ];
+      case 'characterSelect': {
+        const assignedCount = Object.values(characterSelections).filter(id => id !== null).length;
+        const allSelected = players.length === assignedCount;
+        const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [
+          { label: 'BACK', onClick: () => setGamePhase('synopsis') },
+        ];
+        if (myPlayer?.isMaster) {
+          ops.push({ label: 'CONFIRMED', onClick: () => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' }), disabled: !allSelected });
+        }
+        return ops;
+      }
+      case 'synopsis':
+        return [
+          { label: 'BACK', onClick: () => setGamePhase('introduction') },
+          { label: 'NEXT', onClick: () => setGamePhase('characterSelect') },
+        ];
+      case 'commonInfo':
+        return [
+          { label: 'NEXT', onClick: () => setGamePhase('individualStory') },
+        ];
+      case 'individualStory': {
+        const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [
+          { label: 'BACK', onClick: () => setGamePhase('commonInfo') },
+        ];
+        if (myPlayer?.isMaster) {
+          ops.push({ label: '第一議論へ', onClick: () => dispatchModal({ type: 'OPEN', modal: 'hoReadForcedEnd' }) });
+        }
+        return ops;
+      }
+      case 'interlude':
+        return [
+          { label: '第二議論へ', onClick: handleProceedToSecondDiscussion },
+        ];
+      case 'ending':
+        return [
+          { label: '感想戦へ', onClick: handleProceedToDebriefing },
+        ];
+      default:
+        return [];
+    }
+  };
+
   return (
     <div className="App">
-      {shouldShowReadingTimer && remainingTime > 0 && (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: '1001' }}>
-          <Timer initialSeconds={remainingTime} isTicking={true} onTimeUp={() => { }} />
-        </div>
-      )}
       {activeSkillState.status === 'selecting_target' && (
         <SkillOverlay
           skillInfoData={skillInfo}
@@ -577,8 +639,32 @@ function App() {
           onCancel={handleCancelSkill}
         />
       )}
-      {phasesToShowBreadcrumbs.includes(gamePhase) && <Breadcrumbs currentPhase={gamePhase} />}
-      {renderScreen()}
+      {phasesToShowHeaderFooter.includes(gamePhase) &&
+        <Breadcrumbs
+          currentPhase={gamePhase}
+        />}
+      <div className="AppContent">
+        <div className="AppContent-inner">
+          {renderScreen()}
+        </div>
+      </div>
+      {phasesToShowHeaderFooter.includes(gamePhase) &&
+        <Footer
+          currentPhase={gamePhase}
+          players={players}
+          myPlayer={myPlayer}
+          characters={scenario!.characters}
+          characterSelections={characterSelections}
+          readingTimerSeconds={shouldShowReadingTimer ? remainingTime : 0}
+          discussionTimer={discussionTimer}
+          onHowTo={() => dispatchModal({ type: 'OPEN', modal: 'howto' })}
+          onSetStandBy={() => socket && socketService.emitSetStandBy(socket, roomId, userId, true)}
+          operationButtons={operationButtonsForPhase()}
+          onStartTimer={() => handleStartDiscussionTimer(gamePhase as any, discussionSeconds)}
+          onPauseTimer={handlePauseDiscussionTimer}
+          onResumeTimer={handleResumeDiscussionTimer}
+          onRequestEnd={handleRequestEndDiscussion}
+        />}
 
       <AppModals
         modalState={modalState}
@@ -602,6 +688,7 @@ function App() {
         setErrorMessage={setErrorMessage}
         handleJoinRoom={handleJoinRoom}
         setRoomId={setRoomId}
+        currentPhase={gamePhase}
       />
     </div>
   );

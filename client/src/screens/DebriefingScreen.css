@@ -25,10 +25,19 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 20px;
-  height: 60vh; /* 高さを画面の高さの60%に */
-  overflow-y: auto;
+  height: 60vh; /* 表示領域の高さ */
+  overflow: hidden; /* display-panel 内ではスクロールさせない */
   line-height: 1.6;
   width: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 単一コンテンツ（あとがき、得点など）をスクロール可能にするラッパー */
+.panel-content-scroll {
+  flex: 1 1 auto;
+  min-height: 0; /* パーセントベースの子の計算に必要 */
+  overflow-y: auto;
 }
 
 .control-button {
@@ -60,10 +69,24 @@
   border-top: 1px solid #eee;
 }
 .debriefing-info-cards-list {
-    flex-grow: 0;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 2%; /* カード間のスペース */
+  flex: 0 0 var(--debrief-cards-height, 70%);
+  min-height: 0; /* パーセント高さ計算のため */
+  overflow-y: auto; /* 内側でスクロール */
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 2%; /* カード間のスペース */
+}
+
+.display-panel .game-log-section {
+  flex: 0 0 var(--debrief-log-height, 25%);
+  height: auto !important; /* 他CSSの固定高さを無効化 */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.display-panel .game-log-content {
+  flex: 1 1 auto;
+  overflow-y: auto; /* 内側でスクロール */
 }

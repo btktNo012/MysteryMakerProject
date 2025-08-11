@@ -1,47 +1,67 @@
 /* Tabs.css */
 .tabs-container {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .tab-list {
+  position: relative; /* インジケーターの基準点 */
   display: flex;
-  border-bottom: 2px solid #ccc;
+  border-bottom: 1px solid #555; /* 全体に薄い線を引く */
   padding-left: 0;
   margin-top: 0;
   margin-bottom: 0;
+  overflow-x: auto; /* 横スクロールを有効化 */
+  overflow-y: hidden; /* 縦スクロールを無効化 */
+  white-space: nowrap; /* タブ内のテキスト折り返しを防ぐ */
+  flex-shrink: 0; /* コンテンツ量で縮まないようにする */
+}
+
+/* スクロールバーのスタイリング (任意) */
+.tab-list::-webkit-scrollbar {
+  height: 8px;
+}
+.tab-list::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 2px;
 }
 
 .tab-list-item {
   list-style: none;
   padding: 12px 20px;
   cursor: pointer;
-  background-color: #333;
-  border: 1px solid #ccc;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent; /* レイアウトが崩れないように透明なボーダーを維持 */
   margin-right: 5px;
   position: relative;
-  bottom: -1px; /* アクティブでないタブを少し下げる */
-  transition: background-color 0.2s;
+  transition: color 0.2s;
+  flex-shrink: 0; /* タブが縮まないようにする */
+  color: #aaa; /* 非アクティブ時の色 */
 }
 
 .tab-list-item:hover {
-  background-color: #666;
+  color: #fff; /* ホバー時の色 */
 }
 
 .tab-list-item.active {
-  background-color: #000;
-  border-bottom: 2px solid #fff; /* 下線を白にして、下のパネルと繋がって見えるようにする */
   font-weight: bold;
+  color: #fff; /* アクティブ時の色 */
+}
+
+.active-tab-indicator {
+  position: absolute;
+  bottom: -1px; /* 親のborderと重なるように調整 */
+  height: 2px;
+  background-color: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* アニメーション */
 }
 
 .tab-panel {
   padding: 20px;
-  border: 2px solid #f0f0f0;
-  border-top: none;
-  background-color: #000;
-  /* パネルの高さを確保し、スクロール可能にする */
-  height: 80%;
+  background-color: #242424; /* 右パネルの背景色に合わせる */
+  flex-grow: 1; /* 残りの高さをすべて埋める */
   overflow-y: auto;
   line-height: 1.6;
+  min-height: 0; /* flexアイテムの縮小を許可 */
 }

@@ -1,7 +1,6 @@
 // src/screens/CharacterSelectScreen.tsx
 
 import React from 'react';
-import StyledButton from '../components/StyledButton';
 import { type Character, type CharacterSelections, type Player } from '../types';
 import './CharacterSelectScreen.css';
 
@@ -15,17 +14,16 @@ interface CharacterSelectScreenProps {
   myPlayerId: string;
   isMaster: boolean;
   players: Player[];
+  hideBack?: boolean;
+  hideConfirm?: boolean;
 }
 
 // キャラクター選択画面のコンポーネント
 const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   characters,
-  onBack,
   onCharacterSelect,
-  onConfirm,
   characterSelections,
   myPlayerId,
-  isMaster,
   players
 }) => {
 
@@ -45,9 +43,6 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
     // 他人が選択している場合は何もしない
   };
 
-  // 全員がキャラクターを選択したかどうか
-  const allPlayersSelected = players.length === Object.values(characterSelections).filter(id => id !== null).length;
-
   // 選択者名を取得するヘルパー関数
   const getSelectorName = (characterId: string): string | null => {
     const selectorUserId = characterSelections[characterId];
@@ -59,7 +54,6 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
 
   return (
     <div className="char-select-container">
-      <h1>キャラクターセレクト</h1>
       <div className='note'>演じるキャラクターを選択してください</div>
       <div className="char-select-content">
         <ul className="char-list">
@@ -88,16 +82,6 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
         </ul>
       </div>
       <div className='note'>次の画面からハンドアウトの読み込みが始まります。キャラクター決定後は通話をミュートにしてください</div>
-      <div className="navigation-area">
-        <StyledButton onClick={onBack}>
-          BACK
-        </StyledButton>
-        {isMaster && (
-          <StyledButton onClick={onConfirm} disabled={!allPlayersSelected}>
-            CONFIRMED
-          </StyledButton>
-        )}
-      </div>
     </div>
   );
 };

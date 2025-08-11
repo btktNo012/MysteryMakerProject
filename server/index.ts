@@ -108,6 +108,8 @@ interface Player {
     secondDiscussion: number;
   };
   skills: Skill[];
+  // 準備中
+  isStandBy: boolean;
 }
 
 interface InfoCard {
@@ -257,7 +259,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('createRoom', async ({ username, userId }: { username: string, userId: string }) => {
     const roomId = generateRoomId();
-    const master: Player = { id: socket.id, userId, name: username, isMaster: true, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [] };
+    const master: Player = { id: socket.id, userId, name: username, isMaster: true, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
 
     const characterSelections: Record<string, string | null> = {};
     scenarioData.characters.forEach((char: any) => {
@@ -312,7 +314,7 @@ io.on('connection', (socket: Socket) => {
         socket.emit('roomFull');
         return;
       }
-      const newPlayer: Player = { id: socket.id, userId, name: username, isMaster: false, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [] };
+      const newPlayer: Player = { id: socket.id, userId, name: username, isMaster: false, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
       room.players.push(newPlayer);
       log(`${username} (userId: ${userId}) joined room: ${upperRoomId}`);
     }
@@ -420,9 +422,12 @@ io.on('connection', (socket: Socket) => {
     if (room && room.masterUserId === userId) {
       room.gamePhase = 'firstDiscussion';
       room.readingTimerEndTime = null;
+      // フェーズ移動時に全員の準備状態をリセット
+      room.players = room.players.map(p => ({ ...p, isStandBy: false }));
       await saveRoomToDB(room);
       log(`Proceeding to first discussion in room: ${roomId}. Phase: ${room.gamePhase}`);
       io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
+      io.to(roomId).emit('updatePlayers', { players: room.players });
     }
   });
 
@@ -507,6 +512,8 @@ io.on('connection', (socket: Socket) => {
 
     if (room.discussionTimer.phase === 'firstDiscussion') {
       room.gamePhase = 'interlude';
+      // 中間情報画面に移動時に全員の準備状態をリセット
+      room.players = room.players.map(p => ({ ...p, isStandBy: false }));
     } else if (room.discussionTimer.phase === 'secondDiscussion') {
       room.gamePhase = 'voting';
     }
@@ -516,6 +523,20 @@ io.on('connection', (socket: Socket) => {
     log(`Room ${roomId}: Discussion ended by master. New phase: ${room.gamePhase}`);
     io.to(roomId).emit('discussionTimerUpdated', room.discussionTimer);
     io.to(roomId).emit('gamePhaseChanged', room.gamePhase);
+    if (room.gamePhase === 'interlude') {
+      io.to(roomId).emit('updatePlayers', { players: room.players });
+    }
+  });
+
+  // 準備中/準備完了設定
+  socket.on('setStandBy', async ({ roomId, userId, value }: { roomId: string, userId: string, value: boolean }) => {
+    const room = await getRoomFromDB(roomId);
+    if (!room) return;
+    const player = room.players.find(p => p.userId === userId);
+    if (!player) return;
+    player.isStandBy = value;
+    await saveRoomToDB(room);
+    io.to(room.id).emit('updatePlayers', { players: room.players, masterUserId: room.masterUserId });
   });
 
   socket.on('getCard', async ({ roomId, userId, cardId }: { roomId: string, userId: string, cardId: string }) => {

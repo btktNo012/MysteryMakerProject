@@ -91,6 +91,8 @@ export interface Player {
     secondDiscussion: number;
   };
   skills: Skill[];
+  // 準備中
+  isStandBy: boolean;
 }
 
 // キャラクター選択状況
@@ -121,13 +123,21 @@ export interface InfoCard {
   isPublic: boolean;
   conditionalInfo?: ConditionalInfo;
 }
-
 // 議論タイマー
 export interface DiscussionTimer {
   endTime: number | null;
   isTicking: boolean;
   phase: 'firstDiscussion' | 'secondDiscussion' | null;
   endState: 'none' | 'requested' | 'timeup';
+}
+// タイマー
+export interface Timer {
+  initialSeconds: number; // 初期n時間（秒）
+  isTicking: boolean;     // タイマーが作動中か (true: 作動, false: 一時停止)
+  onTimeUp: () => void;   // 時間がゼロになったときに呼び出される関数
+  resetTrigger?: any;     // この値が変わるとタイマーがリセットされる
+  endTime: number | null; // 終了時間
+  endState: 'none' | 'requested' | 'timeup';  // タイマー状態(none: 終了前、requested:操作中、timeup:時間切れ)
 }
 
 // 投票状況

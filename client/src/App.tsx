@@ -99,6 +99,7 @@ function App() {
   const [voteState, setVoteState] = useState<VoteState>({});
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameLog, setGameLog] = useState<GameLogEntry[]>([]);
+  const [discussionHowtoSeq, setDiscussionHowtoSeq] = useState(0);
 
   const userIdRef = useRef(userId);
   useEffect(() => {
@@ -508,6 +509,7 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
+          howtoTrigger={discussionHowtoSeq}
           hideControls
         />;
       case 'interlude': return <InfoDisplayScreen filePath={scenario!.intermediateInfo.textFile} />;
@@ -542,6 +544,7 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
+          howtoTrigger={discussionHowtoSeq}
           hideControls
         />;
       case 'voting':
@@ -657,7 +660,13 @@ function App() {
           characterSelections={characterSelections}
           readingTimerSeconds={shouldShowReadingTimer ? remainingTime : 0}
           discussionTimer={discussionTimer}
-          onHowTo={() => dispatchModal({ type: 'OPEN', modal: 'howto' })}
+          onHowTo={() => {
+            if (gamePhase === 'firstDiscussion' || gamePhase === 'secondDiscussion') {
+              setDiscussionHowtoSeq(s => s + 1);
+            } else {
+              dispatchModal({ type: 'OPEN', modal: 'howto' });
+            }
+          }}
           onSetStandBy={() => socket && socketService.emitSetStandBy(socket, roomId, userId, true)}
           operationButtons={operationButtonsForPhase()}
           onStartTimer={() => handleStartDiscussionTimer(gamePhase as any, discussionSeconds)}

@@ -30,6 +30,7 @@ interface DiscussionScreenProps {
   onUseSkill: (skillId: string | null) => void; // スキル使用
   gameLog: GameLogEntry[];
   hideControls?: boolean; // フッター移行のため画面内のタイマー・操作を隠す
+  howtoTrigger?: number; // フッター「この画面について」のトリガー
 }
 
 const evaluateConditions = (card: InfoCard, players: Player[], characterSelections: CharacterSelections): boolean => {
@@ -139,7 +140,8 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onConfirmEnd,
   onUseSkill,
   gameLog,
-  hideControls
+  hideControls,
+  howtoTrigger
 }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(discussionTime);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
@@ -153,12 +155,36 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   const userId = myPlayer.userId;
 
   const logContainerRef = React.useRef<HTMLDivElement>(null);
+  // ガイド表示用の状態
+  const [isTourActive, setIsTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0); // 0..4
 
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [gameLog]);
+
+  // フッターからのHowToトリガーで開始
+  useEffect(() => {
+    if (howtoTrigger !== undefined) {
+      setIsTourActive(true);
+      setTourStep(0);
+    }
+  }, [howtoTrigger]);
+
+  const highlight = (name: 'skills' | 'info' | 'log' | 'right'): boolean => {
+    if (!isTourActive) return false;
+    if (tourStep === 1 && name === 'skills') return true;
+    if (tourStep === 2 && name === 'info') return true;
+    if (tourStep === 3 && name === 'log') return true;
+    if (tourStep === 4 && name === 'right') return true;
+    return false;
+  };
+
+  const closeTour = () => setIsTourActive(false);
+  const prevStep = () => setTourStep(s => Math.max(0, s - 1));
+  const nextStep = () => setTourStep(s => Math.min(4, s + 1));
 
   // --- タイマーロジック ---
   useEffect(() => {
@@ -288,9 +314,12 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
 
   return (
     <div className="discussion-screen">
+      {isTourActive && (
+        <div className="tour-overlay" onClick={closeTour} />
+      )}
       <div className="discussion-left-panel">
         {myPlayer.skills && myPlayer.skills.length > 0 && (
-          <div className="skills-section">
+          <div className={`skills-section${highlight('skills') ? ' tour-highlight' : ''}`}>
             <div className='discussion-header'>キャラクター：{character.name}のスキル</div>
             <ul className="skills-list">
               {myPlayer.skills.map((skill, index) => (
@@ -311,7 +340,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
               ))}
             </ul>
           </div>)}
-        <div className="info-cards-section">
+        <div className={`info-cards-section${highlight('info') ? ' tour-highlight' : ''}`}>
           <div className="info-cards-header">
             <div className='discussion-header'>情報カード</div>
             <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
@@ -347,7 +376,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
             })}
           </div>
         </div>
-        <div className="game-log-section">
+        <div className={`game-log-section${highlight('log') ? ' tour-highlight' : ''}`}>
           <div className="game-log-content" ref={logContainerRef}>
             {gameLog.map((log, index) => (
               <div key={index} className={`log-entry log-type-${log.type}`}>{log.message}</div>
@@ -356,7 +385,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         </div>
       </div>
 
-      <div className={`discussion-right-panel${isRightPanelWide ? ' wide' : ''}`}>
+      <div className={`discussion-right-panel${isRightPanelWide ? ' wide' : ''}${highlight('right') ? ' tour-highlight' : ''}`}>
         {/* 幅切り替えボタン */}
         <button
           className="right-panel-toggle-tab"
@@ -403,6 +432,46 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         </div>
         )}
       </div>
+
+      {/* 下部メッセージ欄 */}
+      {isTourActive && (tourStep === 0 || tourStep === 1 || tourStep === 2 || tourStep === 4) && (
+        <div className={`tour-panel tour-panel-bottom show`}>
+          <div className="tour-panel-inner">
+            <div className="tour-text">
+              {tourStep === 0 && (
+                <>この画面ではスキル、情報カード、ゲームログ、右パネルの操作ができます。順に説明します。<br />NEXTで進みます。</>
+              )}
+              {tourStep === 1 && (
+                <>スキル欄です。あなたのキャラクターが使えるスキルの内容と使用状況を確認できます。アクティブスキルは「使用する」から発動します。</>
+              )}
+              {tourStep === 2 && (
+                <>情報カード欄です。クリックでカードの内容を表示し、所持中は公開・譲渡ができます。取得上限や公開状態もここで確認します。</>
+              )}
+              {tourStep === 4 && (
+                <>右パネルです。タブで共通情報や個別ストーリーなどを切り替えられます。幅の拡大・縮小も可能です。</>
+              )}
+            </div>
+            <div className="tour-actions">
+              {tourStep > 0 && <button className="tour-btn" onClick={prevStep}>BACK</button>}
+              {tourStep < 4 && <button className="tour-btn primary" onClick={nextStep}>NEXT</button>}
+              {tourStep === 4 && <button className="tour-btn danger" onClick={closeTour}>CLOSE</button>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 上部メッセージ欄 */}
+      {isTourActive && tourStep === 3 && (
+        <div className={`tour-panel tour-panel-top show`}>
+          <div className="tour-panel-inner">
+            <div className="tour-text">ゲームログです。カード取得や公開、譲渡、フェーズ開始などの履歴が表示されます。状況の共有に役立ちます。</div>
+            <div className="tour-actions">
+              <button className="tour-btn" onClick={prevStep}>BACK</button>
+              <button className="tour-btn primary" onClick={nextStep}>NEXT</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Modal
         isOpen={isGetCardConfirmModalOpen}

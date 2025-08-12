@@ -200,9 +200,10 @@ function App() {
       console.log('Connected to server with socket ID:', newSocket.id);
       const storedRoomId = localStorage.getItem('roomId');
       const storedUsername = localStorage.getItem('username');
+      const storedSpectator = localStorage.getItem('isSpectator');
       if (storedRoomId && storedUserId && storedUsername) {
         console.log(`Attempting to rejoin room ${storedRoomId} as ${storedUsername}`);
-        socketService.emitJoinRoom(newSocket, storedUsername, storedUserId, storedRoomId);
+        socketService.emitJoinRoom(newSocket, storedUsername, storedUserId, storedRoomId, storedSpectator === 'true');
       }
     });
 
@@ -297,7 +298,16 @@ function App() {
     if (!socket) return;
     if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
     localStorage.setItem('username', username);
-    socketService.emitJoinRoom(socket, username, userId, roomId);
+    localStorage.setItem('isSpectator', 'false');
+    socketService.emitJoinRoom(socket, username, userId, roomId, false);
+  };
+
+  const handleSpectateRoom = () => {
+    if (!socket) return;
+    if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
+    localStorage.setItem('username', username);
+    localStorage.setItem('isSpectator', 'true');
+    socketService.emitJoinRoom(socket, username, userId, roomId, true);
   };
 
   const handleLeaveRoom = () => {
@@ -421,7 +431,7 @@ function App() {
     }
 
     const characterDependentPhases: GamePhase[] = ['individualStory', 'firstDiscussion', 'secondDiscussion', 'voting', 'ending', 'debriefing'];
-    if (characterDependentPhases.includes(gamePhase) && !selectedCharacterId) {
+    if (characterDependentPhases.includes(gamePhase) && !selectedCharacterId && !myPlayer?.isSpectator) {
       // 復帰処理中に選択済みキャラIDがまだセットされていない場合があるため、characterSelectionsから再取得を試みる
       const myCharId = Object.keys(characterSelections).find(charId => characterSelections[charId] === userId);
       if (myCharId) {
@@ -444,10 +454,13 @@ function App() {
     switch (gamePhase) {
       case 'splash': return <SplashScreen onNext={() => setGamePhase('start')} />;
       case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => dispatchModal({ type: 'OPEN', modal: 'createRoom' })} onFindRoom={() => dispatchModal({ type: 'OPEN', modal: 'findRoom' })} onExpMurder={() => dispatchModal({ type: 'OPEN', modal: 'expMurder' })} />;
-      case 'waiting': return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={maxPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
+      case 'waiting': {
+        const requiredPlayers = scenario!.characters.filter(c => c.type === 'PC').length;
+        return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={requiredPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
+      }
       case 'introduction': return <InfoDisplayScreen filePath={scenario!.introductionFile} />;
       case 'synopsis': return <InfoDisplayScreen filePath={scenario!.synopsisFile} />;
-      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={() => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' })} players={players} hideBack hideConfirm />;
+      case 'characterSelect': return <CharacterSelectScreen characters={scenario!.characters} onBack={() => setGamePhase('synopsis')} onCharacterSelect={handleCharacterSelect} characterSelections={characterSelections} myPlayerId={userId} isMaster={myPlayer?.isMaster || false} onConfirm={() => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' })} players={players} isSpectator={!!myPlayer?.isSpectator} hideBack hideConfirm />;
       case 'commonInfo': return (
         <>
           <InfoDisplayScreen filePath={scenario!.commonInfo.textFile} />
@@ -464,18 +477,22 @@ function App() {
           </>
         );
       case 'firstDiscussion':
-        if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
-        const tabItems1: TabItem[] = [
+        if (!myPlayer) return <div>プレイヤー情報が見つかりません。</div>;
+        const effectiveChar1 = myPlayer.isSpectator
+          ? (scenario!.characters.find(c => c.type === 'PC') || scenario!.characters[0])
+          : selectedChar;
+        if (!effectiveChar1) return <div>表示するキャラクター情報が見つかりません。</div>;
+        let tabItems1: TabItem[] = [
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
-          { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
+          { label: '個別ストーリー', content: effectiveChar1.storyFile ? <TextRenderer filePath={effectiveChar1.storyFile} /> : <div /> },
           {
             label: '目的',
-            content: selectedChar.goals ?
+            content: effectiveChar1.goals ?
               (
                 <div>
-                  {selectedChar.goals && selectedChar.goals.length > 0 ? (
+                  {effectiveChar1.goals && effectiveChar1.goals.length > 0 ? (
                     <ul className='goals-list'>
-                      {selectedChar.goals.map((goal, index) => (
+                      {effectiveChar1.goals.map((goal, index) => (
                         <li key={index}>{goal.text} ({goal.points}点)<ul className='goal-hint'><li>{goal.hint}</li></ul></li>
                       ))}
                     </ul>
@@ -484,12 +501,15 @@ function App() {
               )
               : <div />
           },
-          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
+          { label: '現場見取り図', content: effectiveChar1.mapImageFile ? <img src={effectiveChar1.mapImageFile} className="discuttion-map-image" alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
+        if (myPlayer.isSpectator) {
+          tabItems1 = tabItems1.filter(item => item.label !== '個別ストーリー' && item.label !== '目的');
+        }
         return <DiscussionScreen
           title="第一議論フェイズ"
           gamePhase={gamePhase}
-          character={selectedChar}
+          character={effectiveChar1}
           tabItems={tabItems1}
           discussionTime={DISCUSSION_SECCONDS}
           infoCards={infoCards}
@@ -510,21 +530,29 @@ function App() {
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
           howtoTrigger={discussionHowtoSeq}
+          isSpectator={!!myPlayer.isSpectator}
           hideControls
         />;
       case 'interlude': return <InfoDisplayScreen filePath={scenario!.intermediateInfo.textFile} />;
       case 'secondDiscussion':
-        if (!selectedChar || !myPlayer) return <div>選択されたキャラクター情報が見つかりません。</div>;
-        const tabItems2: TabItem[] = [
+        if (!myPlayer) return <div>プレイヤー情報が見つかりません。</div>;
+        const effectiveChar2 = myPlayer.isSpectator
+          ? (scenario!.characters.find(c => c.type === 'PC') || scenario!.characters[0])
+          : selectedChar;
+        if (!effectiveChar2) return <div>表示するキャラクター情報が見つかりません。</div>;
+        let tabItems2: TabItem[] = [
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
-          { label: '個別ストーリー', content: selectedChar.storyFile ? <TextRenderer filePath={selectedChar.storyFile} /> : <div /> },
+          { label: '個別ストーリー', content: effectiveChar2.storyFile ? <TextRenderer filePath={effectiveChar2.storyFile} /> : <div /> },
           { label: '中間情報', content: <TextRenderer filePath={scenario!.intermediateInfo.textFile} /> },
-          { label: '現場見取り図', content: selectedChar.mapImageFile ? <img src={selectedChar.mapImageFile} alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
+          { label: '現場見取り図', content: effectiveChar2.mapImageFile ? <img src={effectiveChar2.mapImageFile} alt="現場見取り図" style={{ maxWidth: '700px', height: 'auto' }} /> : <div>地図情報はありません。</div> }
         ];
+        if (myPlayer.isSpectator) {
+          tabItems2 = tabItems2.filter(item => item.label !== '個別ストーリー');
+        }
         return <DiscussionScreen
           title="第二議論フェイズ"
           gamePhase={gamePhase}
-          character={selectedChar}
+          character={effectiveChar2}
           tabItems={tabItems2}
           discussionTime={DISCUSSION_SECCONDS}
           infoCards={infoCards}
@@ -545,6 +573,7 @@ function App() {
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
           howtoTrigger={discussionHowtoSeq}
+          isSpectator={!!myPlayer.isSpectator}
           hideControls
         />;
       case 'voting':
@@ -590,7 +619,8 @@ function App() {
         ];
       case 'characterSelect': {
         const assignedCount = Object.values(characterSelections).filter(id => id !== null).length;
-        const allSelected = players.length === assignedCount;
+        const participantCount = players.filter(p => !p.isSpectator).length;
+        const allSelected = participantCount === assignedCount && participantCount > 0;
         const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [
           { label: 'BACK', onClick: () => setGamePhase('synopsis') },
         ];
@@ -605,6 +635,7 @@ function App() {
           { label: 'NEXT', onClick: () => setGamePhase('characterSelect') },
         ];
       case 'commonInfo':
+        if (myPlayer?.isSpectator) return [];
         return [
           { label: 'NEXT', onClick: () => setGamePhase('individualStory') },
         ];
@@ -661,6 +692,9 @@ function App() {
           readingTimerSeconds={shouldShowReadingTimer ? remainingTime : 0}
           discussionTimer={discussionTimer}
           onHowTo={() => {
+            if (myPlayer?.isSpectator) {
+              return; // 観戦者はチュートリアル完全無効化
+            }
             if (gamePhase === 'firstDiscussion' || gamePhase === 'secondDiscussion') {
               setDiscussionHowtoSeq(s => s + 1);
             } else {
@@ -696,6 +730,7 @@ function App() {
         setUsername={setUsername}
         setErrorMessage={setErrorMessage}
         handleJoinRoom={handleJoinRoom}
+        handleSpectateRoom={handleSpectateRoom}
         setRoomId={setRoomId}
         currentPhase={gamePhase}
       />

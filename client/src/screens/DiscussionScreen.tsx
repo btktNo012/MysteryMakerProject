@@ -31,6 +31,7 @@ interface DiscussionScreenProps {
   gameLog: GameLogEntry[];
   hideControls?: boolean; // フッター移行のため画面内のタイマー・操作を隠す
   howtoTrigger?: number; // フッター「この画面について」のトリガー
+  isSpectator?: boolean; // 観戦者フラグ
 }
 
 const evaluateConditions = (card: InfoCard, players: Player[], characterSelections: CharacterSelections): boolean => {
@@ -141,7 +142,8 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onUseSkill,
   gameLog,
   hideControls,
-  howtoTrigger
+  howtoTrigger,
+  isSpectator
 }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(discussionTime);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
@@ -166,12 +168,13 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   }, [gameLog]);
 
   // フッターからのHowToトリガーで開始
+  // 観戦者はツアーを開始しない。初期マウント時(0)は開始しない。
   useEffect(() => {
-    if (howtoTrigger !== undefined) {
+    if (!isSpectator && (typeof howtoTrigger === 'number') && howtoTrigger > 0) {
       setIsTourActive(true);
       setTourStep(0);
     }
-  }, [howtoTrigger]);
+  }, [howtoTrigger, isSpectator]);
 
   const highlight = (name: 'skills' | 'info' | 'log' | 'right'): boolean => {
     if (!isTourActive) return false;
@@ -318,7 +321,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         <div className="tour-overlay" onClick={closeTour} />
       )}
       <div className="discussion-left-panel">
-        {myPlayer.skills && myPlayer.skills.length > 0 && (
+        {!isSpectator && myPlayer.skills && myPlayer.skills.length > 0 && (
           <div className={`skills-section${highlight('skills') ? ' tour-highlight' : ''}`}>
             <div className='discussion-header'>キャラクター：{character.name}のスキル</div>
             <ul className="skills-list">
@@ -343,7 +346,9 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         <div className={`info-cards-section${highlight('info') ? ' tour-highlight' : ''}`}>
           <div className="info-cards-header">
             <div className='discussion-header'>情報カード</div>
-            <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
+            {!isSpectator && (
+              <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
+            )}
           </div>
           <div className="discussion-info-cards-list">
             {infoCards.map(card => {
@@ -361,7 +366,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                 <div
                   key={card.id}
                   className={cardClassName}
-                  onClick={() => handleCardClick(card)}
+                  onClick={() => { if (isSpectator && !card.isPublic) return; handleCardClick(card); }}
                 >
                   {card.iconFile && <img src={card.iconFile} alt={card.name} className="info-card-icon" />}
                   <div className="info-card-name">{card.name}</div>
@@ -517,6 +522,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         >
           <div className="transfer-player-list">
             {players
+              .filter(p => !p.isSpectator)
               .filter(p => p.userId !== userId) //自分以外
               .map(player => (
                 <StyledButton key={player.userId} onClick={() => handleTransferConfirm(player.userId)}>

@@ -102,6 +102,8 @@ interface Player {
   userId: string;
   name: string;
   isMaster: boolean;
+  // 観戦者フラグ（trueなら観戦者として参加）
+  isSpectator?: boolean;
   connected: boolean;
   acquiredCardCount: {
     firstDiscussion: number;
@@ -259,7 +261,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('createRoom', async ({ username, userId }: { username: string, userId: string }) => {
     const roomId = generateRoomId();
-    const master: Player = { id: socket.id, userId, name: username, isMaster: true, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
+    const master: Player = { id: socket.id, userId, name: username, isMaster: true, isSpectator: false, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
 
     const characterSelections: Record<string, string | null> = {};
     scenarioData.characters.forEach((char: any) => {
@@ -295,7 +297,7 @@ io.on('connection', (socket: Socket) => {
     });
   });
 
-  socket.on('joinRoom', async ({ username, userId, roomId }: { username: string, userId: string, roomId: string }) => {
+  socket.on('joinRoom', async ({ username, userId, roomId, isSpectator }: { username: string, userId: string, roomId: string, isSpectator?: boolean }) => {
     const upperRoomId = roomId.toUpperCase();
     const room = await getRoomFromDB(upperRoomId);
 
@@ -308,13 +310,20 @@ io.on('connection', (socket: Socket) => {
     if (existingPlayer) {
       existingPlayer.id = socket.id;
       existingPlayer.connected = true;
+      // 既存プレイヤーの観戦フラグは原則維持（明示指定がある場合のみ更新）
+      if (typeof isSpectator === 'boolean') {
+        existingPlayer.isSpectator = isSpectator;
+      }
       log(`Player reconnected: ${username} (userId: ${userId}) in room: ${upperRoomId}`);
     } else {
-      if (room.players.length >= room.maxPlayers) {
+      // 参加者数（観戦者を除く）が規定人数を超えている場合は参加を拒否
+      const participantCount = room.players.filter(p => !p.isSpectator).length;
+      const wantSpectator = !!isSpectator;
+      if (!wantSpectator && participantCount >= room.maxPlayers) {
         socket.emit('roomFull');
         return;
       }
-      const newPlayer: Player = { id: socket.id, userId, name: username, isMaster: false, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
+      const newPlayer: Player = { id: socket.id, userId, name: username, isMaster: false, isSpectator: wantSpectator, connected: true, acquiredCardCount: { firstDiscussion: 0, secondDiscussion: 0 }, skills: [], isStandBy: false };
       room.players.push(newPlayer);
       log(`${username} (userId: ${userId}) joined room: ${upperRoomId}`);
     }

@@ -155,8 +155,8 @@ export const emitCreateRoom = (socket: Socket, username: string, userId: string)
 };
 
 // ルーム入室
-export const emitJoinRoom = (socket: Socket, username: string, userId: string, roomId: string) => {
-  socket.emit('joinRoom', { username, userId, roomId });
+export const emitJoinRoom = (socket: Socket, username: string, userId: string, roomId: string, isSpectator?: boolean) => {
+  socket.emit('joinRoom', { username, userId, roomId, isSpectator });
 };
 
 // ルーム退室

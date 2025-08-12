@@ -22,19 +22,29 @@ const WaitingScreen: React.FC<WaitingScreenProps> = ({
   onClose,
   onStart,
 }) => {
-  const canStart = players.length === maxPlayers;
+  const participants = players.filter(p => !p.isSpectator);
+  const spectators = players.filter(p => p.isSpectator);
+  const canStart = participants.length === maxPlayers;
 
   return (
     <div className="waiting-container">
       <h2>ルームID: {roomId}</h2>
       <p>ルームIDを参加者に通知してください</p>
-      <p>参加者が揃うまでお待ちください... ({players.length}/{maxPlayers})</p>
+      <p>参加者が揃うまでお待ちください... ({participants.length}/{maxPlayers})</p>
 
       <div className="player-list">
         <h3>参加者:</h3>
         <ul>
-          {players.map((player) => (
+          {participants.map((player) => (
             <li key={player.id}>{player.name} {player.isMaster ? '(ルームマスター)' : ''}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="player-list" style={{ marginTop: '12px' }}>
+        <h3>観戦者:</h3>
+        <ul>
+          {spectators.map((player) => (
+            <li key={player.id}>{player.name}</li>
           ))}
         </ul>
       </div>

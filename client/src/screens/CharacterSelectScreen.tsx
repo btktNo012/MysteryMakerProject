@@ -14,6 +14,7 @@ interface CharacterSelectScreenProps {
   myPlayerId: string;
   isMaster: boolean;
   players: Player[];
+  isSpectator?: boolean;
   hideBack?: boolean;
   hideConfirm?: boolean;
 }
@@ -24,11 +25,13 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   onCharacterSelect,
   characterSelections,
   myPlayerId,
-  players
+  players,
+  isSpectator
 }) => {
 
   // キャラクターカードがクリックされたときの処理
   const handleCardClick = (character: Character) => {
+    if (isSpectator) return; // 観戦者は選択操作不可
     // NPCの場合は何もしない
     if (character.type === 'NPC') return;
     const currentSelection = characterSelections[character.id];
@@ -53,7 +56,7 @@ const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
   };
 
   return (
-    <div className="char-select-container">
+    <div className={`char-select-container${isSpectator ? ' spectator' : ''}`}>
       <div className='note'>演じるキャラクターを選択してください</div>
       <div className="char-select-content">
         <ul className="char-list">

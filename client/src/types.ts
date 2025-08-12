@@ -85,6 +85,8 @@ export interface Player {
   userId: string; // 永続的なユーザーID
   name: string;
   isMaster: boolean;
+  // 観戦者フラグ（trueの場合は観戦者）
+  isSpectator?: boolean;
   connected: boolean;
   acquiredCardCount: {
     firstDiscussion: number;

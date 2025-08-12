@@ -71,12 +71,14 @@ const Footer: React.FC<FooterProps> = ({
     <footer className="app-footer" aria-label="footer">
       <div className="app-footer-inner">
         <div className="howto-area">
-          <StyledButton onClick={onHowTo}>この画面について</StyledButton>
+          {!myPlayer?.isSpectator && (
+            <StyledButton onClick={onHowTo}>この画面について</StyledButton>
+          )}
         </div>
 
         <div className="player-list-area">
           <strong>プレイヤーリスト</strong>
-          {players.map(player => {
+          {players.filter(p => !p.isSpectator).map(player => {
             const charName = isAfterCharacterSelect ? getCharacterNameByUserId(player.userId) : null;
             const isMe = myPlayer?.userId === player.userId;
             return (
@@ -110,7 +112,7 @@ const Footer: React.FC<FooterProps> = ({
         </div>
 
         <div className="operation-btn-area">
-          {(currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && isMaster && (
+          {(currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && isMaster && !myPlayer?.isSpectator && (
             <>
               {!discussionTimer.endTime && onStartTimer && (
                 <StyledButton onClick={onStartTimer}>議論開始</StyledButton>

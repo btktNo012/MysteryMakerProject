@@ -38,6 +38,15 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
+/* 観戦者はホバー時の見た目変化なし・カーソル通常 */
+.char-select-container.spectator .char-card-pc {
+    cursor: default;
+}
+.char-select-container.spectator .char-card-pc:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .char-card-pc.selected-me {
     border-color: #4a90e2;
     box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);

@@ -1,6 +1,7 @@
 
 // src/components/AppModals.tsx
 import Modal from './Modal';
+import React, { useState } from 'react';
 import TextRenderer from './TextRenderer';
 import { type Player, type ScenarioData, type VoteResult } from '../types';
 
@@ -50,6 +51,7 @@ interface AppModalsProps {
   setUsername: (username: string) => void;
   setErrorMessage: (message: string | null) => void;
   handleJoinRoom: () => void;
+  handleSpectateRoom: () => void;
   setRoomId: (roomId: string) => void;
 }
 
@@ -75,8 +77,10 @@ const AppModals: React.FC<AppModalsProps> = ({
   setUsername,
   setErrorMessage,
   handleJoinRoom,
+  handleSpectateRoom,
   setRoomId,
 }) => {
+  const [joinAsSpectator, setJoinAsSpectator] = useState(false);
   return (
     <>
       {/* 画面の説明モーダル */}
@@ -178,13 +182,21 @@ const AppModals: React.FC<AppModalsProps> = ({
 
       <Modal isOpen={modalState.findRoom}
         message="ユーザー名とルームIDを入力してください"
-        onConfirm={handleJoinRoom}
+        onConfirm={() => joinAsSpectator ? handleSpectateRoom() : handleJoinRoom()}
         onClose={() => dispatchModal({ type: 'CLOSE', modal: 'findRoom' })}
-        confirmButtonText="参加"
+        confirmButtonText={joinAsSpectator ? '観戦' : '参加'}
         closeButtonText="キャンセル">
         <div className="modal-inputs">
           <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setErrorMessage(null); }} placeholder="ユーザー名" className="modal-input" />
           <input type="text" value={roomId} onChange={(e) => { setRoomId(e.target.value); setErrorMessage(null); }} placeholder="ルームID" className="modal-input" />
+        </div>
+        <div className="toggle-row" role="group" aria-label="観戦モード切替">
+          <span>通常参加</span>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={joinAsSpectator} onChange={e => setJoinAsSpectator(e.target.checked)} aria-label="観戦で入室する" />
+            <span className="toggle-slider" />
+          </label>
+          <span>観戦</span>
         </div>
         {errorMessage && <p className="error-message">{errorMessage}</p>}
       </Modal>

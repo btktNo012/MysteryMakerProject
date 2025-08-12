@@ -23,8 +23,9 @@ const VotingScreen: React.FC<VotingScreenProps> = ({
   const [selectedVote, setSelectedVote] = useState<string>('');
 
   const myVote = voteState[myPlayer.userId];
-  const totalPlayers = players.length;
-  const votedPlayers = Object.keys(voteState).length;
+  const participantPlayers = players.filter(p => !p.isSpectator);
+  const totalPlayers = participantPlayers.length;
+  const votedPlayers = Object.keys(voteState).filter(uid => participantPlayers.some(p => p.userId === uid)).length;
   const isVotingConcluded = !!voteResult; // 投票が終了したかどうかのフラグ
 
   const getCharacterName = (charId: string) => characters.find(c => c.id === charId)?.name || '不明';
@@ -46,30 +47,36 @@ const VotingScreen: React.FC<VotingScreenProps> = ({
       ) : (
         <>
           <h2>投票</h2>
-          <p>犯人だと思う人物に投票してください。</p>
-          <div className="vote-selection-area">
-            <div className="character-list">
-              {characters.map(char => (
-                <div 
-                  key={char.id}
-                  className={`character-card ${selectedVote === char.id ? 'selected' : ''} ${myVote ? 'disabled' : ''}`}
-                  onClick={() => !myVote && setSelectedVote(char.id)}
-                >
-                  {char.name}
+          {myPlayer.isSpectator ? (
+            <p>観戦者は投票できません。投票状況のみ表示します。</p>
+          ) : (
+            <>
+              <p>犯人だと思う人物に投票してください。</p>
+              <div className="vote-selection-area">
+                <div className="character-list">
+                  {characters.map(char => (
+                    <div 
+                      key={char.id}
+                      className={`character-card ${selectedVote === char.id ? 'selected' : ''} ${myVote ? 'disabled' : ''}`}
+                      onClick={() => !myVote && setSelectedVote(char.id)}
+                    >
+                      {char.name}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <StyledButton onClick={handleVoteClick} disabled={!selectedVote || !!myVote}>
-              {myVote ? `投票済み: ${getCharacterName(myVote)}` : '投票する'}
-            </StyledButton>
-          </div>
+                <StyledButton onClick={handleVoteClick} disabled={!selectedVote || !!myVote}>
+                  {myVote ? `投票済み: ${getCharacterName(myVote)}` : '投票する'}
+                </StyledButton>
+              </div>
+            </>
+          )}
         </>
       )}
       <div className="vote-status">
         <h3>現在の投票状況</h3>
         <p>{votedPlayers} / {totalPlayers} 人が投票済み</p>
         <ul>
-          {players.map(p => (
+          {participantPlayers.map(p => (
             <li key={p.userId} className={voteState[p.userId] ? 'voted' : 'not-voted'}>
               {p.name}: {voteState[p.userId] ? '投票済み' : '未投票'}
             </li>

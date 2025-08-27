@@ -58,15 +58,6 @@ const Footer: React.FC<FooterProps> = ({
 
   const showReadingTimer = readingTimerSeconds > 0;
   const showDiscussionTimer = !!discussionTimer.phase;
-  const computeDiscussionSeconds = (): number => {
-    if (discussionTimer.isTicking && discussionTimer.endTime != null) {
-      return Math.max(0, Math.round((discussionTimer.endTime - Date.now()) / 1000));
-    }
-    if (!discussionTimer.isTicking && discussionTimer.remainingMs != null) {
-      return Math.max(0, Math.round(discussionTimer.remainingMs / 1000));
-    }
-    return 0;
-  };
 
   return (
     <footer className="app-footer" aria-label="footer">

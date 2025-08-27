@@ -10,15 +10,17 @@ interface VotingScreenProps {
   voteState: VoteState;
   voteResult: VoteResult | null;
   onSubmitVote: (votedCharacterId: string) => void;
+  defaultVoting: string | null;
 }
 
-const VotingScreen: React.FC<VotingScreenProps> = ({ 
-  characters, 
+const VotingScreen: React.FC<VotingScreenProps> = ({
+  characters,
   players,
   myPlayer,
   voteState,
   voteResult,
-  onSubmitVote
+  onSubmitVote,
+  defaultVoting
 }) => {
   const [selectedVote, setSelectedVote] = useState<string>('');
 
@@ -55,7 +57,7 @@ const VotingScreen: React.FC<VotingScreenProps> = ({
               <div className="vote-selection-area">
                 <div className="character-list">
                   {characters.map(char => (
-                    <div 
+                    <div
                       key={char.id}
                       className={`character-card ${selectedVote === char.id ? 'selected' : ''} ${myVote ? 'disabled' : ''}`}
                       onClick={() => !myVote && setSelectedVote(char.id)}
@@ -63,6 +65,15 @@ const VotingScreen: React.FC<VotingScreenProps> = ({
                       {char.name}
                     </div>
                   ))}
+                  {defaultVoting && (
+                    <div
+                      key='default'
+                      className={`character-card ${selectedVote === 'default' ? 'selected' : ''} ${myVote ? 'disabled' : ''}`}
+                      onClick={() => !myVote && setSelectedVote('default')}
+                    >
+                      {defaultVoting}
+                    </div>
+                  )}
                 </div>
                 <StyledButton onClick={handleVoteClick} disabled={!selectedVote || !!myVote}>
                   {myVote ? `投票済み: ${getCharacterName(myVote)}` : '投票する'}

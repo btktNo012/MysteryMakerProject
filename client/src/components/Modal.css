@@ -23,6 +23,7 @@
   width: 90%;
   max-width: 720px;
   text-align: center;
+  color:#000
 }
 
 /* モーダルのタイトル */
@@ -84,6 +85,10 @@
   transition: .2s;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-text {
+  position: fixed;
+  margin-left: 30px;
 }
 .toggle-switch input:checked + .toggle-slider {
   background: #4a90e2;
@@ -148,4 +153,12 @@
 }
 .modal-button-ok:hover {
     background-color: #007ba7;
+}
+.screen-howto{
+  color: rgba(0, 0, 0);
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  line-height: 1.9;
+  text-align: left;
+  white-space: pre-wrap;
 }

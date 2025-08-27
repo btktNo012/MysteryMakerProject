@@ -61,7 +61,6 @@ export interface ScenarioData {
     textFile: string;
   };
   discussionPhaseSettings: {
-    howto: string;
     firstDiscussion: {
       maxCardsPerPlayer: number;
       timeLimit: number;
@@ -72,6 +71,7 @@ export interface ScenarioData {
     };
   };
   characters: Character[];
+  defaultVoting: string | null;
   endings: Ending[];
   debriefing: {
     mainCommentary: DebriefingContent;
@@ -127,7 +127,8 @@ export interface InfoCard {
 }
 // 議論タイマー
 export interface DiscussionTimer {
-  endTime: number | null;
+  endTime: number | null; // 稼働中の絶対時刻(ms)。一時停止中はnull
+  remainingMs: number | null; // 一時停止中の残り(ms)。稼働中はnull
   isTicking: boolean;
   phase: 'firstDiscussion' | 'secondDiscussion' | null;
   endState: 'none' | 'requested' | 'timeup';

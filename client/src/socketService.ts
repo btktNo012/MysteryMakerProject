@@ -8,7 +8,7 @@ export interface SocketEventHandlers {
   setPlayers: (players: Player[]) => void;
   setMyPlayer: (player: Player | null) => void;
   setErrorMessage: (message: string | null) => void;
-  setMaxPlayers: (maxPlayers: number) => void;
+  setLoadingMessage: (message: string | null) => void;
   setCharacterSelections: (selections: CharacterSelections) => void;
   setInfoCards: (cards: InfoCard[]) => void;
   setDiscussionTimer: (timer: DiscussionTimer) => void;
@@ -31,7 +31,6 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     handlers.setRoomId(data.roomId);
     handlers.setPlayers(data.players);
     handlers.setMyPlayer(data.yourPlayer);
-    handlers.setMaxPlayers(data.maxPlayers);
     handlers.setCharacterSelections(data.characterSelections);
     handlers.setInfoCards(data.infoCards);
     handlers.setDiscussionTimer(data.discussionTimer);
@@ -40,6 +39,7 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     handlers.setGameLog(data.gameLog);
     handlers.setGamePhase(data.gamePhase);
     handlers.dispatchModal({ type: 'CLOSE', modal: 'createRoom' });
+    handlers.setLoadingMessage(null);
     localStorage.setItem('roomId', data.roomId);
   });
 
@@ -49,7 +49,6 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     handlers.setRoomId(data.roomId);
     handlers.setPlayers(data.players);
     handlers.setMyPlayer(data.yourPlayer);
-    handlers.setMaxPlayers(data.maxPlayers);
     handlers.setCharacterSelections(data.characterSelections);
     handlers.setInfoCards(data.infoCards);
     handlers.setDiscussionTimer(data.discussionTimer);
@@ -60,6 +59,7 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     handlers.setReadingTimerEndTime(data.readingTimerEndTime);
     handlers.dispatchModal({ type: 'CLOSE', modal: 'findRoom' });
     handlers.dispatchModal({ type: 'CLOSE', modal: 'expMurder' });
+    handlers.setLoadingMessage(null);
     localStorage.setItem('roomId', data.roomId);
   });
 
@@ -136,12 +136,17 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
   socket.on('roomNotFound', () => {
     handlers.setErrorMessage('ルームが見つかりません。');
     localStorage.removeItem('roomId');
+    handlers.setLoadingMessage(null);
   });
-  socket.on('roomFull', () => handlers.setErrorMessage('そのルームは満員です。'));
+  socket.on('roomFull', () => {
+    handlers.setErrorMessage('そのルームは満員です。')
+    handlers.setLoadingMessage(null);
+  });
 
-  // ルーム解散
+  // ルーム解散を受信
   socket.on('roomClosed', () => {
     console.log('Room closed by server');
+    //ルーム解散クライアント側処理
     handlers.handleRoomClosed();
   });
 };

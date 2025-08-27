@@ -18,6 +18,7 @@ import { type TabItem } from './components/Tabs';
 import { useSkills } from './hooks/useSkills';
 import TextRenderer from './components/TextRenderer';
 import AppModals from './components/AppModals';
+import LoadingOverlay from './components/LoadingOverlay';
 import './style.css';
 import SkillOverlay from './components/SkillOverlay';
 import Breadcrumbs from './components/Breadcrumbs';
@@ -30,7 +31,7 @@ type ModalType =
   'createRoom' |
   'findRoom' |
   'expMurder' |
-  'howto' |
+  'screenHowto' |
   'hoReadForcedEnd' |
   'hoReadEnd' |
   'voteResult' |
@@ -38,18 +39,22 @@ type ModalType =
   'getCardError' |
   'confirmCloseRoom' |
   'characterSelectConfirm' |
-  'skillConfirm';
+  'skillConfirm' |
+  'leaveConfirm' |
+  'startHowto';
 type ModalState = Record<ModalType, boolean>;
+// モーダル表示状態の変更アクション
 type ModalAction =
   { type: 'OPEN'; modal: ModalType } |
   { type: 'CLOSE'; modal: ModalType } |
   { type: 'CLOSE_ALL' };
 
+// モーダル表示ステータス
 const initialModalState: ModalState = {
   createRoom: false,
   findRoom: false,
   expMurder: false,
-  howto: false,
+  screenHowto: false,
   hoReadForcedEnd: false,
   hoReadEnd: false,
   voteResult: false,
@@ -57,9 +62,12 @@ const initialModalState: ModalState = {
   getCardError: false,
   confirmCloseRoom: false,
   characterSelectConfirm: false,
-  skillConfirm: false
+  skillConfirm: false,
+  leaveConfirm: false,
+  startHowto: false
 };
 
+// モーダルの状態変更処理
 const modalReducer = (state: ModalState, action: ModalAction): ModalState => {
   switch (action.type) {
     case 'OPEN':
@@ -85,17 +93,17 @@ function App() {
   const [username, setUsername] = useState('');
   const [roomId, setRoomId] = useState('');
   const [players, setPlayers] = useState<Player[]>([]);
-  const [maxPlayers, setMaxPlayers] = useState(0);
   const [modalState, dispatchModal] = useReducer(modalReducer, initialModalState);
   const [getCardErrorMessage, setGetCardErrorMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const [skillMessage, setSkillMessage] = useState<string>('');
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [characterSelections, setCharacterSelections] = useState<CharacterSelections>({});
   const [readingTimerEndTime, setReadingTimerEndTime] = useState<number | null>(null);
   const [remainingTime, setRemainingTime] = useState(0);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
-  const [discussionTimer, setDiscussionTimer] = useState<DiscussionTimer>({ endTime: null, isTicking: false, phase: null, endState: 'none' });
+  const [discussionTimer, setDiscussionTimer] = useState<DiscussionTimer>({ endTime: null, remainingMs: null, isTicking: false, phase: null, endState: 'none' });
   const [voteState, setVoteState] = useState<VoteState>({});
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameLog, setGameLog] = useState<GameLogEntry[]>([]);
@@ -142,6 +150,34 @@ function App() {
     dispatchModal({ type: 'CLOSE', modal: 'skillConfirm' });
     handleCancelSkill(); // スキル状態を'inactive'に戻す
   };
+  // ゲーム情報の初期化処理
+  const initGameData = () => {
+    // ルームIDを空にする
+    setRoomId('');
+    // プレイヤー情報を空にする
+    setPlayers([]);
+    // 自分自身のプレイヤー情報を初期化
+    setMyPlayer(null);
+    // キャラクターセレクト情報を初期化
+    setCharacterSelections({});
+    // 選択中キャラクター情報を初期化
+    setSelectedCharacterId(null);
+    // HO読み込みタイマー時間を初期化
+    setReadingTimerEndTime(null);
+    // 情報カード情報を初期化
+    setInfoCards([]);
+    // 議論タイマー情報を初期化
+    setDiscussionTimer({ endTime: null, remainingMs: null, isTicking: false, phase: null, endState: 'none' });
+    // 投票の状態を初期化
+    setVoteState({});
+    // 投票結果を初期化
+    setVoteResult(null);
+    // ゲームログ情報を初期化
+    setGameLog([]);
+    // ローカルストレージからルームIDを削除
+    localStorage.removeItem('roomId');
+  }
+
 
   // --- 副作用 ---
   useEffect(() => {
@@ -164,7 +200,7 @@ function App() {
       setPlayers,
       setMyPlayer,
       setErrorMessage,
-      setMaxPlayers,
+      setLoadingMessage,
       setCharacterSelections,
       setInfoCards,
       setDiscussionTimer,
@@ -175,19 +211,11 @@ function App() {
       setSelectedCharacterId,
       dispatchModal,
       handleRoomClosed: () => {
+        // ルーム解散を受信した時の処理
+        // ゲームフェーズをスタート画面に
         setGamePhase('start');
-        setRoomId('');
-        setPlayers([]);
-        setMyPlayer(null);
-        setCharacterSelections({});
-        setSelectedCharacterId(null);
-        setReadingTimerEndTime(null);
-        setInfoCards([]);
-        setDiscussionTimer({ endTime: null, isTicking: false, phase: null, endState: 'none' });
-        setVoteState({});
-        setVoteResult(null);
-        setGameLog([]);
-        localStorage.removeItem('roomId');
+        // ゲーム情報の初期化処理
+        initGameData();
       },
     };
 
@@ -290,42 +318,48 @@ function App() {
   const handleCreateRoom = () => {
     if (!socket) return;
     if (username.trim() === '') return setErrorMessage('ユーザー名を入力してください。');
+    if (username.trim().length > 6) return setErrorMessage('ユーザIDは6文字以内にしてください。');
     localStorage.setItem('username', username);
+    setLoadingMessage('ルーム作成中…');
     socketService.emitCreateRoom(socket, username, userId);
   };
 
+  // プレイヤーとして参加する処理
   const handleJoinRoom = () => {
     if (!socket) return;
     if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
+    if (username.trim().length > 6) return setErrorMessage('ユーザIDは6文字以内にしてください。');
     localStorage.setItem('username', username);
     localStorage.setItem('isSpectator', 'false');
+    setLoadingMessage('ルーム接続中…');
     socketService.emitJoinRoom(socket, username, userId, roomId, false);
   };
 
+  // 観戦モードで参加する処理
   const handleSpectateRoom = () => {
     if (!socket) return;
     if (username.trim() === '' || roomId.trim() === '') return setErrorMessage('ユーザー名とルームIDを入力してください。');
     localStorage.setItem('username', username);
     localStorage.setItem('isSpectator', 'true');
+    setLoadingMessage('ルーム接続中…');
     socketService.emitJoinRoom(socket, username, userId, roomId, true);
   };
 
-  const handleLeaveRoom = () => {
+  // ルーム退室処理
+  const handleConfirmLeave = () => {
+    dispatchModal({ type: 'CLOSE', modal: 'leaveConfirm' });
+    // 通信が確立してない場合、何もしない
     if (!socket) return;
-    socketService.emitLeaveRoom(socket, roomId, userId);
+    // ゲームフェーズが感想戦以外、またはプレイヤーの種別が観戦者の場合、サーバにルーム退室を送信
+    if (myPlayer?.isSpectator || gamePhase !== 'debriefing') socketService.emitLeaveRoom(socket, roomId, userId);
     // 状態をリセット
     setGamePhase('start');
-    setRoomId('');
-    setPlayers([]);
-    setMyPlayer(null);
-    setInfoCards([]);
-    setDiscussionTimer({ endTime: null, isTicking: false, phase: null, endState: 'none' });
-    setVoteState({});
-    setVoteResult(null);
-    localStorage.removeItem('roomId');
+    // ゲーム情報の初期化
+    initGameData();
   };
 
   const handleCloseRoom = () => dispatchModal({ type: 'OPEN', modal: 'confirmCloseRoom' });
+  // ルームを解散
   const handleConfirmCloseRoom = () => {
     if (!socket) return;
     socketService.emitCloseRoom(socket, roomId, userId);
@@ -453,10 +487,23 @@ function App() {
 
     switch (gamePhase) {
       case 'splash': return <SplashScreen onNext={() => setGamePhase('start')} />;
-      case 'start': return <StartScreen title={scenario!.title} titleImage={scenario!.titleImage} onCreateRoom={() => dispatchModal({ type: 'OPEN', modal: 'createRoom' })} onFindRoom={() => dispatchModal({ type: 'OPEN', modal: 'findRoom' })} onExpMurder={() => dispatchModal({ type: 'OPEN', modal: 'expMurder' })} />;
+      case 'start': return <StartScreen title={scenario!.title}
+        titleImage={scenario!.titleImage}
+        onCreateRoom={() => dispatchModal({ type: 'OPEN', modal: 'createRoom' })}
+        onFindRoom={() => dispatchModal({ type: 'OPEN', modal: 'findRoom' })}
+        onExpMurder={() => dispatchModal({ type: 'OPEN', modal: 'expMurder' })}
+        onStartHowto={() => dispatchModal({ type: 'OPEN', modal: 'startHowto' })} />;
       case 'waiting': {
         const requiredPlayers = scenario!.characters.filter(c => c.type === 'PC').length;
-        return <WaitingScreen roomId={roomId} players={players} isMaster={myPlayer?.isMaster || false} maxPlayers={requiredPlayers} onLeave={handleLeaveRoom} onClose={handleCloseRoom} onStart={handleStartGame} />;
+        return <WaitingScreen
+          roomId={roomId}
+          players={players}
+          isMaster={myPlayer?.isMaster || false}
+          maxPlayers={requiredPlayers}
+          onLeave={() => dispatchModal({ type: 'OPEN', modal: 'leaveConfirm' })}
+          onClose={handleCloseRoom}
+          onStart={handleStartGame}
+        />;
       }
       case 'introduction': return <InfoDisplayScreen filePath={scenario!.introductionFile} />;
       case 'synopsis': return <InfoDisplayScreen filePath={scenario!.synopsisFile} />;
@@ -483,6 +530,8 @@ function App() {
           : selectedChar;
         if (!effectiveChar1) return <div>表示するキャラクター情報が見つかりません。</div>;
         let tabItems1: TabItem[] = [
+          { label: 'はじめに', content: <TextRenderer filePath={scenario!.introductionFile} /> },
+          { label: 'あらすじ', content: <TextRenderer filePath={scenario!.synopsisFile} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: effectiveChar1.storyFile ? <TextRenderer filePath={effectiveChar1.storyFile} /> : <div /> },
           {
@@ -529,7 +578,7 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
-          howtoTrigger={discussionHowtoSeq}
+          screenHowtoTrigger={discussionHowtoSeq}
           isSpectator={!!myPlayer.isSpectator}
           hideControls
         />;
@@ -541,6 +590,8 @@ function App() {
           : selectedChar;
         if (!effectiveChar2) return <div>表示するキャラクター情報が見つかりません。</div>;
         let tabItems2: TabItem[] = [
+          { label: 'はじめに', content: <TextRenderer filePath={scenario!.introductionFile} /> },
+          { label: 'あらすじ', content: <TextRenderer filePath={scenario!.synopsisFile} /> },
           { label: '共通情報', content: <TextRenderer filePath={scenario!.commonInfo.textFile} /> },
           { label: '個別ストーリー', content: effectiveChar2.storyFile ? <TextRenderer filePath={effectiveChar2.storyFile} /> : <div /> },
           { label: '中間情報', content: <TextRenderer filePath={scenario!.intermediateInfo.textFile} /> },
@@ -572,7 +623,7 @@ function App() {
           onConfirmEnd={handleConfirmEndDiscussion}
           onUseSkill={handleUseSkill}
           gameLog={gameLog}
-          howtoTrigger={discussionHowtoSeq}
+          screenHowtoTrigger={discussionHowtoSeq}
           isSpectator={!!myPlayer.isSpectator}
           hideControls
         />;
@@ -584,7 +635,8 @@ function App() {
           myPlayer={myPlayer}
           voteState={voteState}
           voteResult={voteResult}
-          onSubmitVote={handleSubmitVote} />;
+          onSubmitVote={handleSubmitVote}
+          defaultVoting={scenario!.defaultVoting} />;
       case 'ending':
         if (!voteResult) return <div>投票結果がありません。</div>;
         let targetEnding = scenario!.endings.find(end => end.votedCharId === voteResult.votedCharacterId) || scenario!.endings.find(end => end.votedCharId === 'default');
@@ -611,58 +663,89 @@ function App() {
     'debriefing',
   ];
 
-  const operationButtonsForPhase = (): { label: string; onClick: () => void; disabled?: boolean }[] => {
+  // ゲームフェーズごとのフッター操作ボタン(議論フェイズは個別に定義)
+  const operationButtonsForPhase = (): {
+    label: string; onClick: () => void; disabled?: boolean
+  }[] => {
+    const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [];
     switch (gamePhase) {
       case 'introduction':
-        return [
-          { label: 'NEXT', onClick: () => setGamePhase('synopsis') },
-        ];
-      case 'characterSelect': {
-        const assignedCount = Object.values(characterSelections).filter(id => id !== null).length;
-        const participantCount = players.filter(p => !p.isSpectator).length;
-        const allSelected = participantCount === assignedCount && participantCount > 0;
-        const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [
-          { label: 'BACK', onClick: () => setGamePhase('synopsis') },
-        ];
-        if (myPlayer?.isMaster) {
-          ops.push({ label: 'CONFIRMED', onClick: () => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' }), disabled: !allSelected });
-        }
-        return ops;
-      }
+        // イントロダクション
+        // 「NEXT」ボタン：あらすじに移動
+        ops.push({ label: 'NEXT ▶', onClick: () => setGamePhase('synopsis') })
+        break;
       case 'synopsis':
-        return [
-          { label: 'BACK', onClick: () => setGamePhase('introduction') },
-          { label: 'NEXT', onClick: () => setGamePhase('characterSelect') },
-        ];
+        // あらすじ
+        // 「BACK」ボタン：イントロダクションに移動
+        ops.push({ label: '◀ BACK', onClick: () => setGamePhase('introduction') });
+        // 「NEXT」ボタン：キャラクターセレクトに移動
+        ops.push({ label: 'NEXT ▶', onClick: () => setGamePhase('characterSelect') });
+        break;
+      case 'characterSelect':
+        // キャラクターセレクト
+        {
+          // 決定済みキャラクターの数
+          const assignedCount = Object.values(characterSelections).filter(id => id !== null).length;
+          // 観戦者以外＝参加プレイヤーの数
+          const participantCount = players.filter(p => !p.isSpectator).length;
+          // 参加プレイヤーの数＝決定済みプレイヤーの場合true
+          const allSelected = participantCount === assignedCount && participantCount > 0;
+          ops.push({ label: '◀ BACK', onClick: () => setGamePhase('synopsis') });
+          if (myPlayer?.isMaster) {
+            // ルームマスターの場合のみ
+            // 「CONFIRMED」ボタン：キャラクターセレクト確定モーダル表示イベント発火。全キャラクターの選択完了時のみ選択可能
+            ops.push({ label: 'CONFIRMED', onClick: () => dispatchModal({ type: 'OPEN', modal: 'characterSelectConfirm' }), disabled: !allSelected });
+          }
+          break;
+        }
       case 'commonInfo':
+        // 共通情報
+        // 観戦者の場合はボタン表示なし
         if (myPlayer?.isSpectator) return [];
-        return [
-          { label: 'NEXT', onClick: () => setGamePhase('individualStory') },
-        ];
+        // 「NEXT」ボタン：個別情報へ移動
+        ops.push({ label: 'NEXT ▶', onClick: () => setGamePhase('individualStory') })
+        break;
       case 'individualStory': {
-        const ops: { label: string; onClick: () => void; disabled?: boolean }[] = [
-          { label: 'BACK', onClick: () => setGamePhase('commonInfo') },
-        ];
+        // 個別情報
+        // 「BACK」ボタン：共通情報へ移動
+        ops.push({ label: '◀ BACK', onClick: () => setGamePhase('commonInfo') })
         if (myPlayer?.isMaster) {
+          // ルームマスターの場合
+          // 「第一議論へ」ボタン：第一議論フェイズへ移動
           ops.push({ label: '第一議論へ', onClick: () => dispatchModal({ type: 'OPEN', modal: 'hoReadForcedEnd' }) });
         }
-        return ops;
+        break;
       }
       case 'interlude':
-        return [
-          { label: '第二議論へ', onClick: handleProceedToSecondDiscussion },
-        ];
+        // 中間情報
+        // 「第二議論へ」ボタン：第二議論フェイズへ移動
+        ops.push({ label: '第二議論へ', onClick: handleProceedToSecondDiscussion });
+        break;
       case 'ending':
-        return [
-          { label: '感想戦へ', onClick: handleProceedToDebriefing },
-        ];
+        // エンディング
+        // 「感想戦へ」ボタン：感想戦へ移動
+        ops.push({ label: '感想戦へ', onClick: handleProceedToDebriefing });
+        break;
       default:
-        return [];
+        // その他（第一議論、第二議論、感想戦（別途記載））
+        break;
     }
+    // 投票フェイズの場合、緊急解散ボタン
+    if (gamePhase === 'voting' && myPlayer?.isMaster) {
+      ops.push({ label: '【緊急用】ルーム解散', onClick: () => dispatchModal({type: 'OPEN', modal: 'confirmCloseRoom' }) });
+    }
+    // 感想戦または観戦者の場合、退室ボタン
+    if (gamePhase === 'debriefing' || myPlayer?.isSpectator) {
+      ops.push({ label: '退室', onClick: () => dispatchModal({ type: 'OPEN', modal: 'leaveConfirm' }) });
+    }
+    return ops;
   };
 
   return (
     <div className="App">
+      {loadingMessage && (
+        <LoadingOverlay message={loadingMessage} />
+      )}
       {activeSkillState.status === 'selecting_target' && (
         <SkillOverlay
           skillInfoData={skillInfo}
@@ -693,12 +776,14 @@ function App() {
           discussionTimer={discussionTimer}
           onHowTo={() => {
             if (myPlayer?.isSpectator) {
-              return; // 観戦者はチュートリアル完全無効化
+              return; // 観戦者はチュートリアル無効化
             }
             if (gamePhase === 'firstDiscussion' || gamePhase === 'secondDiscussion') {
+              // 議論フェイズの場合はチュートリアルツアーを呼び出す
               setDiscussionHowtoSeq(s => s + 1);
             } else {
-              dispatchModal({ type: 'OPEN', modal: 'howto' });
+              // 議論フェイズ以外の場合はモーダル表示
+              dispatchModal({ type: 'OPEN', modal: 'screenHowto' });
             }
           }}
           onSetStandBy={() => socket && socketService.emitSetStandBy(socket, roomId, userId, true)}
@@ -733,6 +818,7 @@ function App() {
         handleSpectateRoom={handleSpectateRoom}
         setRoomId={setRoomId}
         currentPhase={gamePhase}
+        handleConfirmLeave={handleConfirmLeave}
       />
     </div>
   );

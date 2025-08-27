@@ -1,5 +1,10 @@
 // src/components/TextRenderer.tsx
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkDirective from 'remark-directive';
+import remarkBreaks from 'remark-breaks';
+import { classDirective } from '../plugins/classDirective';
+import './TextRenderer.css';
 
 // TextRendererが受け取るPropsの型定義
 interface TextRendererProps {
@@ -10,6 +15,7 @@ interface TextRendererProps {
  * @param filePath テキストファイルパス
  */
 const TextRenderer: React.FC<TextRendererProps> = ({ filePath }) => {
+  
   // 読み込んだテキストコンテンツを保持するState
   const [content, setContent] = useState<string>('');
   // 読み込み中かどうかを管理するState
@@ -38,7 +44,7 @@ const TextRenderer: React.FC<TextRendererProps> = ({ filePath }) => {
         // テキストの内容をセット
         setContent(text);
       } catch (err: any) {
-        console.error("テキストファイルの読み込みに失敗しました:", err);
+        console.error("ファイルの読み込みに失敗しました:", err);
         setError("コンテンツの読み込みに失敗しました。");
       } finally {
         // 成功しても失敗しても、ローディング状態は解除する
@@ -60,14 +66,14 @@ const TextRenderer: React.FC<TextRendererProps> = ({ filePath }) => {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
 
-  // 改行を<br>に変換し、HTMLとして解釈させる
-  const createMarkup = () => {
-    const formattedContent = content.replace(/\n/g, '<br />');
-    return { __html: formattedContent };
-  };
-
   return (
-    <div dangerouslySetInnerHTML={createMarkup()} />
+    <div>
+      <ReactMarkdown
+        remarkPlugins={[remarkDirective, classDirective, remarkBreaks]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 };
 

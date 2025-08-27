@@ -36,7 +36,7 @@ const Tabs: React.FC<TabsProps> = ({ items }) => {
         {items.map((item, index) => (
           <li
             key={item.label}
-            ref={el => (tabsRef.current[index] = el)}
+            ref={(el) => { tabsRef.current[index] = el; }}
             className={`tab-list-item ${index === activeTabIndex ? 'active' : ''}`}
             onClick={() => setActiveTabIndex(index)}
           >

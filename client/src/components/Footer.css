@@ -15,7 +15,7 @@
 }
 
 /* How-to button area */
-.howto-area {
+.screenHowto-area {
   display: flex;
   align-items: center;
 }
@@ -51,8 +51,6 @@
   background-color: #f6f7f9;
   padding: 6px 8px;
   box-sizing: border-box;
-  /* 5列レイアウト（gap=8pxとして）*/
-  flex: 0 0 calc((100% - 4 * 8px) / 5);
 }
 
 .player-name {

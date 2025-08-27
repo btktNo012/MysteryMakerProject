@@ -63,7 +63,8 @@ const DebriefingScreen: React.FC<DebriefingScreenProps> = ({ scenario, infoCards
 
   const handleShareToX = () => {
     const scenarioTitle = scenario.title;
-    const text = `マーダーミステリー『${scenarioTitle}』をプレイしました！\n\n#マダミス #マーダーミステリー\n#${scenarioTitle.replace(/\s/g, '')}`;
+    const gameUrl = 'https://kyuremmountain.onrender.com/';
+    const text = `マーダーミステリー『${scenarioTitle}』をプレイしました！\n${gameUrl}\n\n#マダミス #マーダーミステリー\n#${scenarioTitle.replace(/\s/g, '')}`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };

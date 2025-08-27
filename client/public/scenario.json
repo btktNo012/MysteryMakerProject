@@ -1,19 +1,18 @@
 {
   "title": "久霊武山の一夜",
   "titleImage": "",
-  "introductionFile": "/data/introduction.txt",
-  "synopsisFile": "/data/synopsis.txt",
+  "introductionFile": "/data/introduction.md",
+  "synopsisFile": "/data/synopsis.md",
   "commonInfo": {
-    "textFile": "/data/common_info.txt"
+    "textFile": "/data/common_info.md"
   },
   "intermediateInfo": {
-    "textFile": "/data/intermediate_info.txt"
+    "textFile": "/data/intermediate_info.md"
   },
   "handOutSettings": {
     "timeLimit": 600
   },
   "discussionPhaseSettings": {
-    "howto": "/data/how_to_discussion.txt",
     "firstDiscussion": {
       "maxCardsPerPlayer": 2,
       "timeLimit": 900
@@ -31,7 +30,7 @@
       "type": "PC",
       "profile": "性別：女性 年齢：28歳 慎重な性格",
       "imageFile": "",
-      "storyFile": "./data/char_01_story.txt",
+      "storyFile": "./data/char_01_story.md",
       "mapImageFile": "/images/map_common.png",
       "skills": [
         {
@@ -45,13 +44,13 @@
       "goals": [
         {
           "text": "投票で最多得票者にならない。",
-          "hint": "蹴泥を殴るのに使った懐中電灯にはカバーを取り付けたので、一見すると大の男を気絶させる威力がある武器には見えないだろう。\nしかし登山道具の知識が豊富な人間が手に取ればバレてしまうかもしれない、そうすれば殴打の跡がついたことにも気付かれるだろう。\n怪しまれるのを承知で自分の荷物を確保して渡さないようにするか、懐中電灯のことがバレた時の言い訳を考えるかしたほうがいいだろう",
+          "hint": "蹴泥を殴るのに使った懐中電灯にはカバーを取り付けたので、一見すると大の男を気絶させる威力がある武器には見えないだろう。\nしかし登山道具の知識が豊富な人間が手に取ればバレてしまうかもしれない、そうすれば殴打の跡がついたことにも気付かれるだろう。\n怪しまれるのを承知で自分の荷物を確保して渡さないようにするか、懐中電灯のことがバレた時の言い訳を考えるかしたほうがいいだろう。",
           "points": 7,
           "judge" : "投票で最多得票者にならなければ達成"
         },
         {
-          "text": "蹴泥が迷惑登山者である証拠を見つける",
-          "hint": "蹴泥が兄の死の原因であるのは間違いないが、それを裏付ける証拠があるのなら見つけたい。\n自分自身で手に入れるか、見せてもらうことができればいいだろう",
+          "text": "蹴泥が迷惑登山者である証拠を見つける。",
+          "hint": "蹴泥が兄の死の原因であるのは間違いないが、それを裏付ける証拠があるのなら見つけたい。\n自分自身で手に入れるか、見せてもらうことができればいいだろう。",
           "points": 3,
           "judge" : "「山小屋の宿帳①」「山のパトロール隊の日誌①」「山小屋の備品棚①」を所持している、\nまたは全体公開されていれば達成"
         }
@@ -64,7 +63,7 @@
       "type": "PC",
       "profile": "性別：男性 年齢：27歳 真面目な性格",
       "imageFile": "",
-      "storyFile": "./data/char_02_story.txt",
+      "storyFile": "./data/char_02_story.md",
       "mapImageFile": "/images/map_common.png",
       "skills": [
         {
@@ -77,14 +76,14 @@
       ],
       "goals": [
         {
-          "text": "この事件の犯人を最多得票者にする",
-          "hint": "昨晩の室温は確かに低かったが、与えられた装備を正しく使っていれば凍死を免れたはずだ。\n何者かの手で殺されたのだとしたら明らかにしなければならない",
+          "text": "この事件の犯人を最多得票者にする。",
+          "hint": "昨晩の室温は確かに低かったが、与えられた装備を正しく使っていれば凍死を免れたはずだ。\n何者かの手で殺されたのだとしたら明らかにしなければならない。",
           "points": 6,
           "judge" : "菱利 聖子が最多得票者になれば達成"
         },
         {
-          "text": "パトロール隊の友人が活動していた証拠を手に入れる",
-          "hint": "2024年12月14日に活動していたパトロール日誌が手に入れば無実の証明になるはずだ",
+          "text": "パトロール隊の友人が活動していた証拠を手に入れる。",
+          "hint": "2024年12月14日に活動していたパトロール日誌が手に入れば無実の証明になるはずだ。",
           "points": 4,
           "judge" : "「山のパトロール隊の日誌②」を所持していれば達成"
         }
@@ -97,7 +96,7 @@
       "type": "PC",
       "profile": "性別：男性 年齢：32歳 勇敢な性格",
       "imageFile": "",
-      "storyFile": "./data/char_03_story.txt",
+      "storyFile": "./data/char_03_story.md",
       "mapImageFile": "/images/map_common.png",
       "skills": [
         {
@@ -111,14 +110,14 @@
       "goals": [
         {
           "text": "投票で最多得票者にならない。",
-          "hint": "確かに蹴泥と争いになって彼を突き飛ばしたが、あれが原因で死んだとはやはり考えにくい。犯人扱いはゴメンだ",
-          "points": 8,
+          "hint": "確かに蹴泥と争いになって彼を突き飛ばしたが、あれが原因で死んだとはやはり考えにくい。犯人扱いはゴメンだ。",
+          "points": 6,
           "judge" : "投票で最多得票者にならなければ達成"
         },
         {
-          "text": "被害者を突き飛ばしていたことを知られない。",
-          "hint": "蹴泥を突き飛ばしたこと自体、知られるとまずいだろう。できれば隠し通しておきたい",
-          "points": 2,
+          "text": "蹴泥のビデオカメラを破壊したことを知られない。",
+          "hint": "もしも備品棚を探られたら、俺が壊したビデオカメラが出てくるだろう。壊したのが俺だとバレたら犯人と疑われるかもしれない。",
+          "points": 4,
           "judge" : "幸原 剣一のプレイヤーに知られていなければ達成"
         }
       ]
@@ -137,7 +136,7 @@
       "id": "card_01",
       "name": "死体の状況①",
       "iconFile": "",
-      "content": "側頭部に強く打ち付けた跡が見られる",
+      "content": "側頭部に強く打ち付けた跡が見られる。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -146,7 +145,7 @@
       "id": "card_02",
       "name": "死体の状況②",
       "iconFile": "",
-      "content": "身にまとっている断熱シートとブランケットは、体の上に覆いかぶさっているだけの状態だ。\nこれでは体温を保てずに低体温症に至る可能性が高い",
+      "content": "身にまとっている断熱シートとブランケットは、体の上に覆いかぶさっているだけの状態だ。\nこれでは体温を保てずに低体温症に至る可能性が高い。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -155,7 +154,7 @@
       "id": "card_03",
       "name": "菱利の荷物①",
       "iconFile": "",
-      "content": "懐中電灯。登山の明かりはヘッドランプが基本だが、予備として持っていく人も多い。\nアウトドア用の高ルーメンのものだ",
+      "content": "懐中電灯。登山の明かりはヘッドランプが基本だが、予備として持っていく人も多い。\nアウトドア用の高ルーメンのものだ。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,
@@ -167,7 +166,7 @@
           }
         ],
         "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\nこの懐中電灯はヘッド部分がカバーになっていて取り外すとステンレス製の突起が露出し、護身用の武器にもなるようだ。\n取り外してよく見ると何かに叩きつけた跡がある",
+        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\nこの懐中電灯はヘッド部分がカバーになっていて取り外すとステンレス製の突起が露出し、護身用の武器にもなるようだ。\n取り外してよく見ると何かに叩きつけた跡がある。",
         "falseInfo": ""
       }
     },
@@ -175,7 +174,7 @@
       "id": "card_04",
       "name": "菱利の荷物②",
       "iconFile": "",
-      "content": "登山用のピッケル。どこにも殴ったような跡は見られない",
+      "content": "登山用のピッケル。どこにも殴ったような跡は見られない。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,
@@ -187,7 +186,7 @@
           }
         ],
         "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\nだいぶ昔に生産終了になったモデルのもの。\nしかし手入れが行き届いているため、まだまだ使っていけそうだ",
+        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\nだいぶ昔に生産終了になったモデルのもの。\nしかし手入れが行き届いているため、まだまだ使っていけそうだ。",
         "falseInfo": ""
       }
     },
@@ -195,7 +194,7 @@
       "id": "card_05",
       "name": "幸原の荷物①",
       "iconFile": "",
-      "content": "登山用の救急セット。山では不注意から怪我をすることも珍しくないため、登山の必須アイテムとなる",
+      "content": "登山用の救急セット。山では不注意から怪我をすることも珍しくないため、登山の必須アイテムとなる。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,
@@ -207,7 +206,7 @@
           }
         ],
         "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n救急セットの中身だけその他の装備と比べて充実しているようだ",
+        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n救急セットの中身だけその他の装備と比べて充実しているようだ。",
         "falseInfo": ""
       }
     },
@@ -215,27 +214,16 @@
       "id": "card_06",
       "name": "幸原の荷物②",
       "iconFile": "",
-      "content": "登山用のバックパック。中には登山装備一式が入っている",
+      "content": "寝袋のそばに耳栓が置いてある。つい最近使った形跡があるが、それ以外に特に変わった様子はない。",
       "owner": null,
       "firstOwner": null,
-      "isPublic": false,
-      "conditionalInfo": {
-        "conditions": [
-          {
-            "type": "type_owner",
-            "id": "char_03"
-          }
-        ],
-        "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\nつい最近発売された最新モデルのもの",
-        "falseInfo": ""
-      }
+      "isPublic": false
     },
     {
       "id": "card_07",
       "name": "寺木の荷物①",
       "iconFile": "",
-      "content": "登山用のバックパック。肩紐のあたりが少し破れている",
+      "content": "登山用のバックパック。肩紐のあたりが少し破れている。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,
@@ -247,7 +235,7 @@
           }
         ],
         "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n寺木は不測の事態に備えていつも消耗品や着替えの類は多めに持ってきているらしい",
+        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n寺木は不測の事態に備えていつも消耗品や着替えの類は多めに持ってきているらしい。",
         "falseInfo": ""
       }
     },
@@ -255,7 +243,7 @@
       "id": "card_08",
       "name": "寺木の荷物②",
       "iconFile": "",
-      "content": "登山用のピッケル。どこにも殴ったような跡は見られない",
+      "content": "登山用のピッケル。どこにも殴ったような跡は見られない。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false,
@@ -267,7 +255,7 @@
           }
         ],
         "andOr": "AND",
-        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n寺木の自宅には用途ごとに様々なピッケルが置いてあるらしい",
+        "trueInfo": "寺木のスキル「登山道具の知識」により追加の情報が明かされた…\n寺木の自宅には用途ごとに様々なピッケルが置いてあるらしい。",
         "falseInfo": ""
       }
     },
@@ -275,7 +263,7 @@
       "id": "card_09",
       "name": "蹴泥の荷物",
       "iconFile": "",
-      "content": "この時期の登山装備としては不足している。衣類の素材は登山向けのものでなく、替えもない",
+      "content": "撮影用のカメラや三脚、メッセージボードなどSNS映えアイテムがところ狭しと入っている。\n実用的な装備はほとんど入っていない。バッグには特に装飾品の類は付いていない。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -293,7 +281,7 @@
       "id": "card_11",
       "name": "山小屋の宿帳②",
       "iconFile": "",
-      "content": "熊のイラストの下にギザギザのフキダシで「クマに注意！」と書かれている。\n過去の登山者が描いたらしい",
+      "content": "熊のイラストの下にギザギザのフキダシで「クマに注意！」と書かれている。\n過去の登山者が描いたらしい。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -311,7 +299,7 @@
       "id": "card_13",
       "name": "山のパトロール隊の日誌②",
       "iconFile": "",
-      "content": "パトロール隊のその日の活動内容が細かく記載されている。\n「2024年12月14日 本来の担当者に代わり 甲野 和城」",
+      "content": "パトロール隊のその日の活動内容が細かく記載されている。\n「2024年12月14日 担当者 甲野 和城」",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
@@ -329,59 +317,60 @@
       "id": "card_15",
       "name": "山小屋の備品棚②",
       "iconFile": "",
-      "content": "救助用のロープがあるが、特に不審な点は見られない",
+      "content": "救助用の道具などの備品の奥に壊れたカラビナ型ビデオカメラが置いてあった。\n何か硬いものに押し潰されてしまっており再生はできそうにない。",
       "owner": null,
       "firstOwner": null,
       "isPublic": false
     }
   ],
+  "defaultVoting": "事故死",
   "endings": [
     {
       "votedCharId": "char_01",
-      "endingFile": "/data/ending_char01.txt",
+      "endingFile": "/data/ending_char01.md",
       "title": "エンディング：菱利 聖子"
     },
     {
       "votedCharId": "char_02",
-      "endingFile": "/data/ending_char02.txt",
+      "endingFile": "/data/ending_char02.md",
       "title": "エンディング：幸原 剣一"
     },
     {
       "votedCharId": "char_03",
-      "endingFile": "/data/ending_char03.txt",
+      "endingFile": "/data/ending_char03.md",
       "title": "エンディング：寺木 士郎"
     },
     {
-      "votedCharId": "npc_victim",
-      "endingFile": "/data/ending_victim.txt",
-      "title": "エンディング：蹴泥 逸茂"
-    },
-    {
       "votedCharId": "default",
-      "endingFile": "/data/ending_default_bad.txt",
-      "title": "エンディング：真相にはたどり着けなかった"
+      "endingFile": "/data/ending_default.md",
+      "title": "エンディング：事故死"
     }
   ],
   "debriefing": {
     "mainCommentary": {
       "title": "あとがき",
-      "file": "/data/debriefing_main.txt"
+      "file": "/data/debriefing_main.md"
     },
     "characterInfo": [
       {
         "id": "reveal_char_01",
         "title": "菱利 聖子 END & STORY",
-        "file": "/data/debriefing_char01.txt"
+        "file": "/data/debriefing_char01.md"
       },
       {
         "id": "reveal_char_02",
         "title": "幸原 剣一 END & STORY",
-        "file": "/data/debriefing_char02.txt"
+        "file": "/data/debriefing_char02.md"
       },
       {
         "id": "reveal_char_03",
         "title": "寺木 士郎 END & STORY",
-        "file": "/data/debriefing_char03.txt"
+        "file": "/data/debriefing_char03.md"
+      },
+      {
+        "id": "reveal_default",
+        "title": "事故死END",
+        "file": "/data/ending_default.md"
       }
     ]
   }

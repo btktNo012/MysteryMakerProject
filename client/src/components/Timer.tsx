@@ -1,76 +1,58 @@
 // src/components/Timer.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './Timer.css';
 
-// Timerコンポーネントが受け取るPropsの型定義
+// 制御型タイマー: サーバ由来のendTime(絶対時刻)とpausedRemainingMs(停止中の残り)から算出
 interface TimerProps {
-  initialSeconds: number; // 初期n時間（秒）
-  isTicking: boolean;     // タイマーが作動中か (true: 作動, false: 一時停止)
-  onTimeUp: () => void;   // 時間がゼロになったときに呼び出される関数
-  resetTrigger?: any;      // この値が変わるとタイマーがリセットされる
+  endTimeMs: number | null;           // 稼働中: 絶対時刻(ms)、停止中: null
+  pausedRemainingMs: number | null;   // 停止中: 残り(ms)、稼働中: null
+  isTicking: boolean;                 // 稼働中/停止中
+  onTimeUp?: () => void;              // 0になったら呼び出し（省略可）
+  tickMs?: number;                    // 更新間隔(ms) デフォルト1000
 }
 
-// コンポーネント関数Timerの宣言
-const Timer: React.FC<TimerProps> = ({ 
-  initialSeconds, 
-  isTicking, 
-  onTimeUp,
-  resetTrigger
-}) => {
-  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
+const Timer: React.FC<TimerProps> = ({ endTimeMs, pausedRemainingMs, isTicking, onTimeUp, tickMs = 1000 }) => {
+  const computeRemaining = useMemo(() => {
+    return () => {
+      if (isTicking && endTimeMs != null) {
+        return Math.max(0, Math.round((endTimeMs - Date.now()) / 1000));
+      }
+      if (!isTicking && pausedRemainingMs != null) {
+        return Math.max(0, Math.round(pausedRemainingMs / 1000));
+      }
+      return 0;
+    };
+  }, [isTicking, endTimeMs, pausedRemainingMs]);
 
-  // useEffect: isTicking と remainingSeconds の値が変わるたびに実行される
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(computeRemaining());
+
   useEffect(() => {
-    // タイマーが作動中でなく、または時間が残っていない場合は何もしない
-    if (!isTicking || remainingSeconds <= 0) {
+    // 稼働中: 定期更新。停止中: 値を直接反映
+    if (isTicking && endTimeMs != null) {
+      const update = () => {
+        const secs = computeRemaining();
+        setRemainingSeconds(secs);
+        if (secs === 0 && onTimeUp) onTimeUp();
+      };
+      update();
+      const id = setInterval(update, tickMs);
+      return () => clearInterval(id);
+    } else {
+      const secs = computeRemaining();
+      setRemainingSeconds(secs);
+      // 停止中はポーリング不要
       return;
     }
+  }, [isTicking, endTimeMs, pausedRemainingMs, tickMs, computeRemaining, onTimeUp]);
 
-    // 1秒ごとに remainingSeconds を1減らすタイマーを設定
-    const timerId = setInterval(() => {
-      // タイマーの値を-1
-      setRemainingSeconds(seconds => seconds - 1);
-    }, 1000);
-
-    // クリーンアップ関数: このuseEffectが再実行される前、またはコンポーネントがアンマウントされる時に実行される
-    // これがないと、タイマーがどんどん増えてメモリリークの原因になる
-    return () => clearInterval(timerId);
-
-  }, [isTicking, remainingSeconds]); // isTickingかremainingSecondsが変わった時だけ副作用を再実行
-
-  // useEffect: remainingSeconds が変化するたびに実行。0になったことを検知する
-  useEffect(() => {
-    // タイマーが作動中ではない場合は何もしない
-    if (!isTicking) {
-        return;
-    }
-    if (remainingSeconds === 0) {
-      onTimeUp(); // 親コンポーネントに通知
-    }
-  }, [remainingSeconds, onTimeUp, isTicking]);
-
-  // useEffect: 初期値が変更されたりリセットトリガーが変更されたら時間を初期値に戻す
-  useEffect(() => {
-    setRemainingSeconds(initialSeconds);
-  }, [resetTrigger, initialSeconds]);
-
-
-  // 秒を MM:SS 形式の文字列にフォーマットする関数
-  // @param totalSeconds 残り秒数
-  // return string型の「MM:SS」
   const formatTime = (totalSeconds: number): string => {
-    const safeTotalSeconds = Math.max(0, totalSeconds);
-    const minutes = Math.floor(safeTotalSeconds / 60);
-    const seconds = safeTotalSeconds % 60;
-    // padStart(2, '0') は、文字列が2桁でない場合に左側を '0' で埋める (例: 5 -> "05")
+    const safe = Math.max(0, totalSeconds);
+    const minutes = Math.floor(safe / 60);
+    const seconds = safe % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  return (
-    <div className="timer-container">
-      {formatTime(remainingSeconds)}
-    </div>
-  );
+  return <div className="timer-container">{formatTime(remainingSeconds)}</div>;
 };
 
 export default Timer;

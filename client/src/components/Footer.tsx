@@ -52,25 +52,26 @@ const Footer: React.FC<FooterProps> = ({
   };
 
   const showStandBy = ['commonInfo', 'individualStory', 'interlude'].includes(currentPhase) ||
-    ((currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && !discussionTimer.endTime);
+    ((currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && discussionTimer.phase === null);
 
   const isMaster = myPlayer?.isMaster;
 
   const showReadingTimer = readingTimerSeconds > 0;
   const showDiscussionTimer = !!discussionTimer.phase;
   const computeDiscussionSeconds = (): number => {
-    if (!discussionTimer.endTime) return 0;
-    if (discussionTimer.isTicking) {
+    if (discussionTimer.isTicking && discussionTimer.endTime != null) {
       return Math.max(0, Math.round((discussionTimer.endTime - Date.now()) / 1000));
     }
-    // paused: endTime holds remaining milliseconds
-    return Math.max(0, Math.round(discussionTimer.endTime / 1000));
+    if (!discussionTimer.isTicking && discussionTimer.remainingMs != null) {
+      return Math.max(0, Math.round(discussionTimer.remainingMs / 1000));
+    }
+    return 0;
   };
 
   return (
     <footer className="app-footer" aria-label="footer">
       <div className="app-footer-inner">
-        <div className="howto-area">
+        <div className="screenHowto-area">
           {!myPlayer?.isSpectator && (
             <StyledButton onClick={onHowTo}>この画面について</StyledButton>
           )}
@@ -102,28 +103,36 @@ const Footer: React.FC<FooterProps> = ({
 
         <div className="timer-area">
           {showReadingTimer && (
-            <Timer initialSeconds={readingTimerSeconds} isTicking={true} onTimeUp={() => { }} />
+            <Timer
+              endTimeMs={Date.now() + Math.max(0, readingTimerSeconds) * 1000}
+              pausedRemainingMs={null}
+              isTicking={true}
+              onTimeUp={() => { }}
+            />
           )}
           {!showReadingTimer && showDiscussionTimer && (
-            <Timer initialSeconds={computeDiscussionSeconds()}
+            <Timer
+              endTimeMs={discussionTimer.endTime}
+              pausedRemainingMs={discussionTimer.remainingMs}
               isTicking={discussionTimer.isTicking}
-              onTimeUp={() => { }} />
+              onTimeUp={() => { }}
+            />
           )}
         </div>
 
         <div className="operation-btn-area">
-          {(currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && isMaster && !myPlayer?.isSpectator && (
+          {(currentPhase === 'firstDiscussion' || currentPhase === 'secondDiscussion') && !myPlayer?.isSpectator && (
             <>
-              {!discussionTimer.endTime && onStartTimer && (
+              {discussionTimer.phase === null && onStartTimer && isMaster && (
                 <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
               )}
-              {discussionTimer.endTime && discussionTimer.isTicking && onPauseTimer && (
+              {discussionTimer.phase !== null && discussionTimer.isTicking && onPauseTimer && (
                 <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
               )}
-              {discussionTimer.endTime && !discussionTimer.isTicking && onResumeTimer && (
-                <StyledButton onClick={onResumeTimer}>再開</StyledButton>
+              {discussionTimer.phase !== null && !discussionTimer.isTicking && onResumeTimer && (
+                <StyledButton onClick={onResumeTimer} disabled={!(discussionTimer.remainingMs != null && discussionTimer.remainingMs > 0)}>再開</StyledButton>
               )}
-              {discussionTimer.endTime && onRequestEnd && (
+              {discussionTimer.phase !== null && onRequestEnd && isMaster && (
                 <StyledButton onClick={onRequestEnd} style={{ backgroundColor: '#f44336' }}>議論強制終了</StyledButton>
               )}
             </>

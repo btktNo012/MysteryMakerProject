@@ -28,15 +28,17 @@
 }
 
 .goals-list {
+  counter-reset: listnum;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  list-style: none;
   padding-left: 0;
   white-space: pre-wrap;
 }
 .goals-list li::before {
-  content: "★";
+  counter-increment: listnum;
+  content: counter(listnum)". ";
 }
 
 .goal-item {
@@ -53,7 +55,7 @@
 }
 .goal-hint li{
   position: relative;
-  padding-left: 3.2em
+  padding-left: 2.8em
 }
 .goal-hint li::before{
   content: "Hint!";
@@ -63,7 +65,7 @@
   justify-content: center;
   width: 2.6em;
   height: 1.6em;
-  background-color: #eee;
+  background-color:khaki;
   color: #333;
   border-radius: 0.4em; /* 角丸 */
   font-size: 0.9em;

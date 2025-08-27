@@ -30,7 +30,7 @@ interface DiscussionScreenProps {
   onUseSkill: (skillId: string | null) => void; // スキル使用
   gameLog: GameLogEntry[];
   hideControls?: boolean; // フッター移行のため画面内のタイマー・操作を隠す
-  howtoTrigger?: number; // フッター「この画面について」のトリガー
+  screenHowtoTrigger?: number; // フッター「この画面について」のトリガー
   isSpectator?: boolean; // 観戦者フラグ
 }
 
@@ -142,24 +142,43 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   onUseSkill,
   gameLog,
   hideControls,
-  howtoTrigger,
+  screenHowtoTrigger,
   isSpectator
 }) => {
-  const [remainingSeconds, setRemainingSeconds] = useState(discussionTime);
   const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
   const [isCardDetailModalOpen, setIsCardDetailModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isGetCardConfirmModalOpen, setIsGetCardConfirmModalOpen] = useState(false);
   const [cardToGet, setCardToGet] = useState<InfoCard | null>(null);
-  const [isRightPanelWide, setIsRightPanelWide] = useState(false);
-
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const lastWidthRef = React.useRef(0);
+  const startXRef = React.useRef(0);
+  const startWidthRef = React.useRef(0);
+  const containerWidthRef = React.useRef(0);
+  const pendingWidthRef = React.useRef(0);
+  // 左パネルの幅（localStorageで復元）
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => {
+    const RESIZER = 12;
+    const MIN_LEFT = 280;
+    const MIN_RIGHT = 320;
+    const saved = localStorage.getItem('discussionLeftPanelWidth');
+    if (saved) {
+      const n = parseInt(saved, 10);
+      if (!Number.isNaN(n)) return n;
+    }
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const maxLeft = Math.max(MIN_LEFT, vw - MIN_RIGHT - RESIZER);
+    const base = Math.floor(vw * 0.6);
+    return Math.min(Math.max(base, MIN_LEFT), maxLeft);
+  });
   const isMaster = myPlayer.isMaster;
   const userId = myPlayer.userId;
-
   const logContainerRef = React.useRef<HTMLDivElement>(null);
   // ガイド表示用の状態
   const [isTourActive, setIsTourActive] = useState(false);
-  const [tourStep, setTourStep] = useState(0); // 0..4
+  // 議論チュートリアルツアーのページング
+  const [tourStep, setTourStep] = useState(0);
 
   useEffect(() => {
     if (logContainerRef.current) {
@@ -170,16 +189,16 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   // フッターからのHowToトリガーで開始
   // 観戦者はツアーを開始しない。初期マウント時(0)は開始しない。
   useEffect(() => {
-    if (!isSpectator && (typeof howtoTrigger === 'number') && howtoTrigger > 0) {
+    if (!isSpectator && (typeof screenHowtoTrigger === 'number') && screenHowtoTrigger > 0) {
       setIsTourActive(true);
       setTourStep(0);
     }
-  }, [howtoTrigger, isSpectator]);
+  }, [screenHowtoTrigger, isSpectator]);
 
   const highlight = (name: 'skills' | 'info' | 'log' | 'right'): boolean => {
     if (!isTourActive) return false;
-    if (tourStep === 1 && name === 'skills') return true;
-    if (tourStep === 2 && name === 'info') return true;
+    if (tourStep === 1 && name === 'info') return true;
+    if (tourStep === 2 && name === 'skills') return true;
     if (tourStep === 3 && name === 'log') return true;
     if (tourStep === 4 && name === 'right') return true;
     return false;
@@ -187,41 +206,8 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
 
   const closeTour = () => setIsTourActive(false);
   const prevStep = () => setTourStep(s => Math.max(0, s - 1));
-  const nextStep = () => setTourStep(s => Math.min(4, s + 1));
+  const nextStep = () => setTourStep(s => Math.min(5, s + 1));
 
-  // --- タイマーロジック ---
-  useEffect(() => {
-    const { endTime, isTicking, endState } = discussionTimer;
-
-    // 時間切れの場合、残り時間を0に設定して終了
-    if (endState === 'timeup') {
-      setRemainingSeconds(0);
-      return;
-    }
-
-    if (!isTicking || !endTime) {
-      if (endTime && !isTicking) {
-        // 一時停止中：残り時間を保持
-        setRemainingSeconds(Math.round(endTime / 1000));
-      } else {
-        // 初期状態
-        setRemainingSeconds(discussionTime);
-      }
-      return;
-    }
-
-    // タイマー作動中
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      const diff = Math.round((endTime - now) / 1000);
-      setRemainingSeconds(diff > 0 ? diff : 0);
-      if (diff <= 0) {
-        clearInterval(intervalId);
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [discussionTimer, discussionTime]);
 
 
   // --- メモ化された計算 ---
@@ -249,7 +235,8 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   // --- イベントハンドラ ---
   const handleCardClick = (card: InfoCard) => {
     if (!card.owner) {
-      if (!discussionTimer.endTime) {
+      // 議論が未開始（phaseがnull）の場合は取得不可
+      if (!discussionTimer.phase) {
         alert('議論が開始されるまで取得できません！');
         return;
       }
@@ -315,12 +302,65 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
     return `${characterName}@${ownerPlayer.name}`;
   };
 
+  // ドラッグ処理（差分計算 + rAFで描画同期）
+  useEffect(() => {
+    const handleMove = (e: PointerEvent) => {
+      if (!isResizing || !containerRef.current) return;
+      const dx = e.clientX - startXRef.current; // 右へドラッグで左幅拡大
+      let newWidth = startWidthRef.current + dx;
+      // 左右の最小幅を担保
+      const RESIZER = 12;
+      const MIN_LEFT = 280;
+      const MIN_RIGHT = 320;
+      const maxLeft = Math.max(MIN_LEFT, containerWidthRef.current - MIN_RIGHT - RESIZER);
+      if (newWidth < MIN_LEFT) newWidth = MIN_LEFT;
+      if (newWidth > maxLeft) newWidth = maxLeft;
+
+      // 左パネル幅を更新
+      setLeftPanelWidth(newWidth);
+    };
+
+    // リサイズの終了
+    const handleUp = () => {
+      if (!isResizing) return;
+      setIsResizing(false);
+      // 最終幅を保存
+      const toSave = pendingWidthRef.current || lastWidthRef.current || leftPanelWidth;
+      try {
+        localStorage.setItem('discussionLeftPanelWidth', String(toSave));
+      } catch { }
+    };
+
+    document.addEventListener('pointermove', handleMove);
+    document.addEventListener('pointerup', handleUp);
+    document.addEventListener('pointercancel', handleUp);
+    return () => {
+      document.removeEventListener('pointermove', handleMove);
+      document.removeEventListener('pointerup', handleUp);
+      document.removeEventListener('pointercancel', handleUp);
+    };
+  }, [isResizing]);
+
+  const onResizer = (e: React.PointerEvent) => {
+    e.preventDefault();
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    containerWidthRef.current = rect.width;
+    startXRef.current = e.clientX;
+    startWidthRef.current = leftPanelWidth;
+    lastWidthRef.current = leftPanelWidth;
+    pendingWidthRef.current = leftPanelWidth;
+    // リサイズの開始
+    try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch { }
+    setIsResizing(true);
+  };
+
   return (
-    <div className="discussion-screen">
+    <div className={"discussion-screen" + (isResizing ? ' resizing' : '')} ref={containerRef}>
       {isTourActive && (
-        <div className="tour-overlay" onClick={closeTour} />
+        <div className="tour-overlay" />
       )}
-      <div className="discussion-left-panel">
+      <div className="discussion-left-panel" style={{ width: leftPanelWidth }}>
         {!isSpectator && myPlayer.skills && myPlayer.skills.length > 0 && (
           <div className={`skills-section${highlight('skills') ? ' tour-highlight' : ''}`}>
             <div className='discussion-header'>キャラクター：{character.name}のスキル</div>
@@ -334,12 +374,12 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                   {skill.type === 'active' &&
                     <button
                       className={`skill-activation-button ${skill.used ? 'used' : ''}`}
-                      onClick={() => discussionTimer.endTime && !skill.used && onUseSkill(skill.id)}
+                      onClick={() => discussionTimer.phase && !skill.used && onUseSkill(skill.id)}
                       disabled={skill.used}
                     >
                       {skill.used ? '使用済' : '使用する'}
                     </button>}
-                </li>
+              </li>
               ))}
             </ul>
           </div>)}
@@ -347,7 +387,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
           <div className="info-cards-header">
             <div className='discussion-header'>情報カード</div>
             {!isSpectator && (
-              <span>取得済み: {acquiredCardCount} / {getCardLimit}</span>
+              <span>【情報取得トークン】残りのトークン: {getCardLimit - acquiredCardCount}／使用済みのトークン:{acquiredCardCount}</span>
             )}
           </div>
           <div className="discussion-info-cards-list">
@@ -390,76 +430,120 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
         </div>
       </div>
 
-      <div className={`discussion-right-panel${isRightPanelWide ? ' wide' : ''}${highlight('right') ? ' tour-highlight' : ''}`}>
-        {/* 幅切り替えボタン */}
-        <button
-          className="right-panel-toggle-tab"
-          onClick={() => setIsRightPanelWide(w => !w)}
-          aria-label={isRightPanelWide ? '縮小' : '拡大'}
-        >
-          {isRightPanelWide ? '▶' : '◀'}
-        </button>
+      <div className="vertical-resizer" onPointerDown={onResizer} role="separator" aria-orientation="vertical" aria-label="左パネルの幅を調整">
+        <div className="resizer-hit" />
+        <div className="resizer-separator" />
+      </div>
+      <div className={`discussion-right-panel${highlight('right') ? ' tour-highlight' : ''}`}>
         <div className="main-content">
           <Tabs items={allTabItems} />
         </div>
         {!hideControls && (
-        <div className="discussion-footer">
-          <div className="timer-wrapper">
-            <Timer
-              initialSeconds={remainingSeconds}
-              isTicking={discussionTimer.isTicking}
-              onTimeUp={() => { }} // サーバー側で処理
-            />
+          <div className="discussion-footer">
+            <div className="timer-wrapper">
+              <Timer
+                endTimeMs={discussionTimer.endTime}
+                pausedRemainingMs={discussionTimer.remainingMs}
+                isTicking={discussionTimer.isTicking}
+                onTimeUp={() => { }} // サーバー側で処理
+              />
+            </div>
+            <div className="buttons-wrapper">
+              {(discussionTimer.phase !== null) && (
+                <>
+                  {discussionTimer.isTicking ? (
+                    <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
+                  ) : (
+                    <StyledButton onClick={onResumeTimer} disabled={!(discussionTimer.remainingMs != null && discussionTimer.remainingMs > 0)}>
+                      再開
+                    </StyledButton>
+                  )}
+                </>
+              )}
+              {isMaster && (
+                <>
+                  {(discussionTimer.phase === null) && (
+                    <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
+                  )}
+                  {(discussionTimer.phase !== null) && (
+                    <StyledButton onClick={onRequestEnd} style={{ backgroundColor: '#f44336' }}>
+                      議論強制終了
+                    </StyledButton>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-          <div className="buttons-wrapper">
-            {discussionTimer.endTime && (
-              <>
-                {discussionTimer.isTicking ? (
-                  <StyledButton onClick={onPauseTimer}>一時停止</StyledButton>
-                ) : (
-                  <StyledButton onClick={onResumeTimer}>再開</StyledButton>
-                )}
-              </>
-            )}
-            {isMaster && (
-              <>
-                {!discussionTimer.endTime && (
-                  <StyledButton onClick={onStartTimer}>議論開始</StyledButton>
-                )}
-                {discussionTimer.endTime && (
-                  <StyledButton onClick={onRequestEnd} style={{ backgroundColor: '#f44336' }}>
-                    議論強制終了
-                  </StyledButton>
-                )}
-              </>
-            )}
-          </div>
-        </div>
         )}
       </div>
 
       {/* 下部メッセージ欄 */}
-      {isTourActive && (tourStep === 0 || tourStep === 1 || tourStep === 2 || tourStep === 4) && (
+      {isTourActive && (tourStep === 0 || tourStep === 1 || tourStep === 2 || tourStep === 4 || tourStep === 5) && (
         <div className={`tour-panel tour-panel-bottom show`}>
+          <button className="tour-btn close" onClick={closeTour}>CLOSE</button>
+          <div className="tour-actions">
+            {tourStep > 0 && <button className="tour-btn back" onClick={prevStep}>◀ BACK</button>}
+            {tourStep < 5 && <button className="tour-btn next" onClick={nextStep}>NEXT ▶</button>}
+          </div>
           <div className="tour-panel-inner">
             <div className="tour-text">
               {tourStep === 0 && (
-                <>この画面ではスキル、情報カード、ゲームログ、右パネルの操作ができます。順に説明します。<br />NEXTで進みます。</>
+                <>
+                  ここからは、得た情報をもとに事件の真相について他のプレイヤーと議論していきます。<br />
+                  議論フェイズでは以下のことができます。<br />
+                  ●情報カードの取得・確認・公開・譲渡<br />
+                  ●キャラクター固有スキルの確認・使用<br />
+                  ●ゲームログの確認<br />
+                  ●これまでの情報の確認<br />
+                  NEXTでそれぞれ確認していきましょう
+                </>
               )}
               {tourStep === 1 && (
-                <>スキル欄です。あなたのキャラクターが使えるスキルの内容と使用状況を確認できます。アクティブスキルは「使用する」から発動します。</>
+                <>
+                  情報カードです。<br />
+                  最初は誰も情報カードを取得していない状態ですが、議論フェイズごとに与えられる「情報取得トークン」を使い、事件現場にある手がかりを調査することができます。<br />
+                  情報カードに対しては、以下のような状態があります。<br />
+                  <br />
+                  ●誰も所持していない情報カード<br />
+                  誰も所有していない情報カードを押すと、情報カードを取得するかどうかの確認メッセージが開かれますので、「取得する」を押すことで自分が所持している状態にできます。<br />
+                  （特に決められていない場合、自分の荷物を取得することもできます）<br />
+                  <br />
+                  ●自分が所持している情報カード<br />
+                  自分が所持している情報カードをクリックすると、その情報カードの詳細を確認できます。<br />
+                  他の人にも確認してもらいたい場合、「全体公開」を押すことで他のプレイヤーにも確認できるようにすることができます。<br />
+                  また、「他の人に譲渡する」を押して自分以外に情報カードを譲渡することもできます。<br />
+                  <br />
+                  ●他の人が所持している情報カード<br />
+                  全体公開してもらうまで、その詳細を確認することはできません。<br />
+                  口頭で教えてもらうこともできますが、嘘をつかれてしまう可能性もあります。<br />
+                  <br />
+                  情報カードの取得に使えるトークンの数は右上の【情報取得トークン】から確認できます。<br />
+                  使用していないトークンは議論フェイズが終了すると破棄されます。必ず使用しましょう。<br />
+                </>
               )}
               {tourStep === 2 && (
-                <>情報カード欄です。クリックでカードの内容を表示し、所持中は公開・譲渡ができます。取得上限や公開状態もここで確認します。</>
+                <>
+                  キャラクターには、固有の「スキル」が与えられていることがあります。目的を果たすために有効に使いましょう。<br />
+                  スキルには以下の種類があります。<br />
+                  <br />
+                  ●アクティブスキル<br />
+                  アクティブスキルは、ゲーム中に一度だけ使用することができます。<br />
+                  「使用する」ボタンを押すことで、効果を発揮します。<br />
+                  <br />
+                  ●パッシブスキル<br />
+                  パッシブスキルはプレイヤーが行動しなくても常に発動し続けるスキルです。
+                </>
               )}
               {tourStep === 4 && (
-                <>右パネルです。タブで共通情報や個別ストーリーなどを切り替えられます。幅の拡大・縮小も可能です。</>
+                <>
+                  右側のパネルには今までの情報が種類ごとに記録されています。<br />
+                  第一議論フェイズが終わった後に明かされる中間情報も、第二議論フェイズでは確認することができます。<br />
+                  左右の境界線をドラッグして幅を調整することもできます。<br />
+                </>
               )}
-            </div>
-            <div className="tour-actions">
-              {tourStep > 0 && <button className="tour-btn" onClick={prevStep}>BACK</button>}
-              {tourStep < 4 && <button className="tour-btn primary" onClick={nextStep}>NEXT</button>}
-              {tourStep === 4 && <button className="tour-btn danger" onClick={closeTour}>CLOSE</button>}
+              {tourStep === 5 && (
+                <>説明は以上です。議論はルームマスターが「議論開始」ボタンを押したら開始します。<br />議論の途中でタイマーを一時停止したい場合は一時停止ボタンで停止することができます。</>
+              )}
             </div>
           </div>
         </div>
@@ -468,11 +552,15 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
       {/* 上部メッセージ欄 */}
       {isTourActive && tourStep === 3 && (
         <div className={`tour-panel tour-panel-top show`}>
+          <button className="tour-btn close" onClick={closeTour}>CLOSE</button>
+          <div className="tour-actions">
+            <button className="tour-btn back" onClick={prevStep}>◀ BACK</button>
+            <button className="tour-btn next" onClick={nextStep}>NEXT ▶</button>
+          </div>
           <div className="tour-panel-inner">
-            <div className="tour-text">ゲームログです。カード取得や公開、譲渡、フェーズ開始などの履歴が表示されます。状況の共有に役立ちます。</div>
-            <div className="tour-actions">
-              <button className="tour-btn" onClick={prevStep}>BACK</button>
-              <button className="tour-btn primary" onClick={nextStep}>NEXT</button>
+            <div className="tour-text">
+              ゲームログです。<br />
+              情報カードの取得、全体公開、譲渡や、アクティブスキルの発動、議論フェイズの開始といった履歴が記録されます。
             </div>
           </div>
         </div>

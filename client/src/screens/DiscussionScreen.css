@@ -12,21 +12,23 @@
 .tour-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 300;
 }
 
 /* ハイライト対象を暗転の上へ持ち上げる */
 .skills-section.tour-highlight,
 .info-cards-section.tour-highlight,
 .game-log-section.tour-highlight {
-    position: relative; /* 元がstaticなので相対配置でstacking context化 */
-    z-index: 1001;      /* 暗転より上に */
+    position: relative;
+    /* 元がstaticなので相対配置でstacking context化 */
+    z-index: 301;
+    /* 暗転より上に */
     box-shadow: 0 0 0 3px #ffeb3b, 0 0 24px rgba(255, 235, 59, 0.6);
 }
+
 .discussion-right-panel.tour-highlight {
-    /* 右パネルはabsolute指定済み。z-indexのみ上げる */
-    z-index: 1002;
+    z-index: 301;
     box-shadow: 0 0 0 3px #ffeb3b, 0 0 24px rgba(255, 235, 59, 0.6);
 }
 
@@ -36,9 +38,8 @@
     width: 100%;
     height: 30vh;
     background: #ffffff;
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-    z-index: 1002;
-    display: flex;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 302;
     align-items: center;
     justify-content: center;
     transition: transform 0.3s ease;
@@ -48,33 +49,26 @@
     top: 0;
     transform: translateY(-100%);
 }
+
 .tour-panel-bottom {
     bottom: 0;
     transform: translateY(100%);
 }
+
 .tour-panel.show.tour-panel-top {
     transform: translateY(0);
 }
+
 .tour-panel.show.tour-panel-bottom {
     transform: translateY(0);
 }
 
 .tour-panel-inner {
-    width: min(1000px, 92%);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
-.tour-text {
-    flex: 1 1 auto;
-    font-size: 1rem;
-    color: #222;
-}
-.tour-actions {
-    display: inline-flex;
-    gap: 10px;
-}
+
 .tour-btn {
     padding: 10px 16px;
     border-radius: 6px;
@@ -82,14 +76,54 @@
     background: #fafafa;
     cursor: pointer;
 }
-.tour-btn.primary { background: #2196F3; border-color: #1e88e5; color: #fff; }
-.tour-btn.danger { background: #f44336; border-color: #e53935; color: #fff; }
+
+.tour-btn.next {
+    background: #2196F3;
+    border-color: #1e88e5;
+    color: #fff;
+}
+
+.tour-btn.back {
+    background: #aaa;
+    border-color: #777;
+    color: #fff;
+}
+
+.tour-btn.close {
+    position: absolute;
+    z-index: 303;
+    padding: 8px 12px;
+    padding: 8px 12px;
+    background: #f44336;
+    border-color: #e53935;
+    color: #fff;
+    top: 20px;
+    right: 20px;
+}
+
+.tour-text {
+    color: #222;
+    margin: 25px;
+    font-size: large;
+    height: 90%;
+    width: 85%;
+    overflow-y: auto;
+}
+
+.tour-actions {
+    position: absolute;
+    display: flex;
+    gap: 10px;
+    bottom: 20px;
+    right: 20px;
+}
 
 .discussion-left-panel {
-    width: 67%;
+    flex: 0 0 auto; /* 固定幅（JSでwidth指定） */
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-width: 200px;
 }
 
 .info-cards-section {
@@ -260,58 +294,65 @@
 }
 
 .discussion-right-panel {
-    position: absolute;
     background-color: #242424;
-    border-left: 1px solid #ccc;
-    top: 0;
-    right: 0;
     height: 100%;
-    width: 30%;
     display: flex;
     flex-direction: column;
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10;
-    /* left-panelより上に */
+    transition: width 0.15s ease-out;
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+    flex: 1 1 auto; /* 残りを占有 */
+    min-width: 320px; /* 右の最小幅（仮） */
 }
 
-.discussion-right-panel.wide {
-    width: 80%;
+/* ドラッグ中はアニメーションを無効化して追従性を向上 */
+.resizing .discussion-right-panel {
+    transition: none !important;
 }
 
-.right-panel-toggle-tab {
+/* ドラッグ用の垂直ハンドル */
+.vertical-resizer {
+    width: 12px;
+    cursor: col-resize;
+    background: transparent;
+    position: relative;
+    user-select: none;
+    touch-action: none;
+}
+
+.resizer-hit {
     position: absolute;
-    left: -31px;
-    /* パネルの外側にタブが出るように調整 */
-    top: 0px;
-    width: 30px;
-    height: 80px;
-    background: #888;
-    color: #fff;
-    border-color: #666;
-    border-radius: 0px 0 0 12px;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5em;
-    z-index: 20;
-    transition: background 0.2s;
-    padding: 0;
-    outline: none;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
 }
 
-.right-panel-toggle-tab:hover {
-    background: #666;
-    border-color: #666;
-    outline: none;
+.resizer-separator {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100%;
+    width: 2px; /* 1本目 */
+    background-color: #d1d5db; /* slate-300 */
 }
 
-.right-panel-toggle-tab:focus {
-    background: #888;
-    border-color: #666;
-    outline: none;
+/* 2本目の縦線を4px右へ */
+.resizer-separator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background-color: #d1d5db;
+}
+
+/* ホバー/ドラッグ時の視認性向上 */
+.vertical-resizer:hover .resizer-separator,
+.vertical-resizer:hover .resizer-separator::after,
+.resizing .vertical-resizer .resizer-separator,
+.resizing .vertical-resizer .resizer-separator::after {
+    background-color: #9ca3af; /* slate-400 */
 }
 
 .main-content {
@@ -500,6 +541,7 @@
 .discuttion-map-image {
     width: 100%;
 }
+
 .discussion-header {
     padding-bottom: 5px;
 }

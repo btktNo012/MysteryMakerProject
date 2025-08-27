@@ -13,7 +13,6 @@
 | handOutSettings                                            | オブジェクト | HO読み込み設定情報        | ハンドアウト読み込みに関する設定情報を構成するオブジェクト                         | -                                                 |
 | handOutSettings.timeLimit                                  | 数値     | HO読み込み時間          | ハンドアウト読み込みの制限時間（秒）                                    | -                                                 |
 | discussionPhaseSettings                                    | オブジェクト | 議論フェイズオブジェクト      | 議論フェイズに関する情報を構成するオブジェクト                               | -                                                 |
-| discussionPhaseSettings.howto                              | 文字列    | 議論フェイズの説明テキストファイル | 議論フェイズの機能を説明するテキストファイルのパス                             | -                                                 |
 | discussionPhaseSettings.firstDiscussion                    | オブジェクト | 第一議論フェイズオブジェクト    | 第一議論フェイズに関する情報を構成するオブジェクト                             | -                                                 |
 | discussionPhaseSettings.secondDiscussion.maxCardsPerPlayer | 数値     | カード取得数            | 議論フェイズでプレイヤー一人が何枚まで情報カードを取得できるかの設定                    | -                                                 |
 | discussionPhaseSettings.secondDiscussion.timeLimit         | 数値     | 制限時間              | 議論フェイズの制限時間の設定                                        | -                                                 |

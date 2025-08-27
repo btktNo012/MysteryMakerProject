@@ -14,9 +14,10 @@ interface StartScreenProps {
   onCreateRoom: () => void; // ルーム作成モーダル表示用の関数
   onFindRoom: () => void;   // ルーム検索モーダル表示用の関数
   onExpMurder: () => void;  // マーダーミステリーの説明モーダル用の関数
+  onStartHowto: () => void;  // 始め方の説明モーダル用の関数
 }
 
-const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRoom, onFindRoom, onExpMurder }) => {
+const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRoom, onFindRoom, onExpMurder, onStartHowto }) => {
   const containerStyle = {
     backgroundImage: titleImage ? `url(${titleImage})` : 'none'
   };
@@ -36,6 +37,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ title, titleImage, onCreateRo
         <div className="button-group">
           <StyledButton onClick={onExpMurder} className="exp-muerder">
             マーダーミステリーとは？
+          </StyledButton>
+        </div>
+        <div className="button-group">
+          <StyledButton onClick={onStartHowto} className="exp-muerder">
+            始め方
           </StyledButton>
         </div>
         <div className="estimated-time">{ESTIMATED_TIME}</div>

@@ -1,26 +1,21 @@
 // src/screens/IndividualStoryScreen.tsx
 import React from 'react';
 import TextRenderer from '../components/TextRenderer';
-import StyledButton from '../components/StyledButton';
 import { type Character } from '../types';
 import './IndividualStoryScreen.css';
 
 interface IndividualStoryScreenProps {
   character: Character;
-  onBack: () => void;
-  onNext: () => void;
   isMaster: boolean;
 }
 
-const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character, onBack, onNext, isMaster }) => {
+const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character}) => {
   if (!character.storyFile) {
     return <div>ストーリー情報がありません。</div>;
   }
 
   return (
     <div className="individual-story-container">
-      <h1>ハンドアウト読み込み：個別ストーリー【{character.name}】</h1>
-
       <div className="individual-story-content">
         <div className="main-content-wrapper">
             <div className="story-content-area">
@@ -32,7 +27,7 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
                     {character.goals.map((goal, index) => (
                       <li key={index} className="goal-item">
                         {goal.text} ({goal.points}点)
-                        <ul><li>{goal.hint}</li></ul>
+                        <ul className='goal-hint'><li>{goal.hint}</li></ul>
                       </li>
                     ))}
                   </ul>
@@ -64,17 +59,6 @@ const IndividualStoryScreen: React.FC<IndividualStoryScreenProps> = ({ character
                 </div>)}
             </div>
         </div>
-      </div>
-
-      <div className="navigation-area">
-        <StyledButton onClick={onBack}>
-          BACK
-        </StyledButton>
-        {isMaster && (
-          <StyledButton onClick={onNext}>
-            第一議論フェイズへ
-          </StyledButton>
-        )}
       </div>
     </div>
   );

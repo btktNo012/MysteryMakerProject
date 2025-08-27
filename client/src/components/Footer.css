@@ -1,0 +1,100 @@
+/* Footer bar */
+.app-footer {
+  border-top: 1px solid #dee2e6;
+  background-color: #fff;
+  padding: 8px 12px;
+  color: #212529;
+  /* ベース文字色（濃いグレー） */
+}
+
+.app-footer-inner {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+/* How-to button area */
+.screenHowto-area {
+  display: flex;
+  align-items: center;
+}
+
+/* Player list */
+.player-list-area {
+  display: flex;
+  flex-direction: row;
+  /* 横並び */
+  flex-wrap: wrap;
+  /* 折り返し */
+  gap: 8px;
+  align-content: flex-start;
+  max-height: 140px;
+  /* 高さ制限で縦スクロール */
+  overflow-y: auto;
+}
+
+/* タイトル（プレイヤーリスト）は非常に濃い灰色で明瞭に */
+.player-list-area>strong {
+  color: #1a1d20;
+  display: block;
+  margin-bottom: 4px;
+  flex: 0 0 100%;
+  /* 見出しは1行占有 */
+}
+
+.player-row {
+  display: block;
+  font-size: 14px;
+  border: 1px solid #d0d5db;
+  border-radius: 6px;
+  background-color: #f6f7f9;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+
+.player-name {
+  color: #212529;
+  /* 背景色とコントラストが出る文字色 */
+}
+
+.standby-button {
+  width: 100%;
+  background-color: #000080;
+}
+
+.standby-button.complete{
+  cursor: default;
+}
+.standby-button.complete,
+.standby-status.complete {
+  opacity: 0.7;
+  background-color: #008000;
+  color: #000;
+}
+
+.standby-status {
+  color: #2b2f33;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #d0d5db;
+  transition: border-color 0.25s;
+  text-align: center;
+}
+
+/* Timer area */
+.timer-area {
+  display: flex;
+  justify-content: center;
+}
+
+/* Operation buttons */
+.operation-btn-area {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

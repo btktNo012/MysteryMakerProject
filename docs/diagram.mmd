@@ -1,0 +1,27 @@
+graph TD
+    subgraph "ユーザーのブラウザ"
+        User["<i class='fa fa-user'></i> ユーザー"]
+    end
+
+    subgraph "Render Platform"
+        subgraph "Static Site (Free Plan)"
+            Frontend["React Client\n(/client)"]
+        end
+
+        subgraph "Web Service (Free/Paid Plan)"
+            Backend["Node.js/Socket.IO Server\n(/server)"]
+        end
+
+        subgraph "PostgreSQL (Paid Plan)"
+            DB["<i class='fa fa-database'></i> PostgreSQL"]
+        end
+    end
+
+    User -- HTTPS --> Frontend
+    Frontend -- WebSocket (WSS) --> Backend
+    Backend -- SQL (CRUD) --> DB
+
+    style User fill:#fff,stroke:#333,stroke-width:2px
+    style Frontend fill:#61DAFB,stroke:#333,stroke-width:2px
+    style Backend fill:#8CC84B,stroke:#333,stroke-width:2px
+    style DB fill:#336791,stroke:#fff,stroke-width:2px,color:#fff

@@ -1,0 +1,38 @@
+.breadcrumbs-list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 15px 15px;
+  margin: 0;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 18px;
+  justify-content: center;
+}
+
+.breadcrumb-item {
+  color: #868e96; /* 未到達フェーズの色 */
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.breadcrumb-item::after {
+  content: '>';
+  margin: 0 0.5em;
+  color: #ced4da;
+  text-decoration: underline;
+}
+
+.breadcrumb-item:last-child::after {
+  content: '';
+}
+
+.breadcrumb-item.completed {
+  color: #495057; /* 完了済みフェーズの色 */
+}
+
+.breadcrumb-item.active {
+  color: #007bff; /* 現在のフェーズの色 */
+  font-weight: 700;
+  text-decoration: underline;
+}

@@ -61,7 +61,6 @@ export interface ScenarioData {
     textFile: string;
   };
   discussionPhaseSettings: {
-    howto: string;
     firstDiscussion: {
       maxCardsPerPlayer: number;
       timeLimit: number;
@@ -72,6 +71,7 @@ export interface ScenarioData {
     };
   };
   characters: Character[];
+  defaultVoting: string | null;
   endings: Ending[];
   debriefing: {
     mainCommentary: DebriefingContent;
@@ -85,12 +85,16 @@ export interface Player {
   userId: string; // 永続的なユーザーID
   name: string;
   isMaster: boolean;
+  // 観戦者フラグ（trueの場合は観戦者）
+  isSpectator?: boolean;
   connected: boolean;
   acquiredCardCount: {
     firstDiscussion: number;
     secondDiscussion: number;
   };
   skills: Skill[];
+  // 準備中
+  isStandBy: boolean;
 }
 
 // キャラクター選択状況
@@ -121,13 +125,22 @@ export interface InfoCard {
   isPublic: boolean;
   conditionalInfo?: ConditionalInfo;
 }
-
 // 議論タイマー
 export interface DiscussionTimer {
-  endTime: number | null;
+  endTime: number | null; // 稼働中の絶対時刻(ms)。一時停止中はnull
+  remainingMs: number | null; // 一時停止中の残り(ms)。稼働中はnull
   isTicking: boolean;
   phase: 'firstDiscussion' | 'secondDiscussion' | null;
   endState: 'none' | 'requested' | 'timeup';
+}
+// タイマー
+export interface Timer {
+  initialSeconds: number; // 初期n時間（秒）
+  isTicking: boolean;     // タイマーが作動中か (true: 作動, false: 一時停止)
+  onTimeUp: () => void;   // 時間がゼロになったときに呼び出される関数
+  resetTrigger?: any;     // この値が変わるとタイマーがリセットされる
+  endTime: number | null; // 終了時間
+  endState: 'none' | 'requested' | 'timeup';  // タイマー状態(none: 終了前、requested:操作中、timeup:時間切れ)
 }
 
 // 投票状況
@@ -144,3 +157,20 @@ export interface GameLogEntry {
   type: string;
   message: string;
 }
+
+// ゲームフェーズ
+export type GamePhase =
+  'splash' |
+  'start' |
+  'waiting' |
+  'introduction' |
+  'synopsis' |
+  'characterSelect' |
+  'commonInfo' |
+  'individualStory' |
+  'firstDiscussion' |
+  'interlude' |
+  'secondDiscussion' |
+  'voting' |
+  'ending' |
+  'debriefing';

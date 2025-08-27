@@ -1,5 +1,5 @@
 // src/components/Tabs.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './Tabs.css';
 
 // タブのデータ構造
@@ -14,6 +14,20 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ items }) => {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [indicatorStyle, setIndicatorStyle] = useState({});
+  const tabsRef = useRef<(HTMLLIElement | null)[]>([]);
+
+  useEffect(() => {
+    const activeTab = tabsRef.current[activeTabIndex];
+    if (activeTab) {
+      setIndicatorStyle({
+        left: activeTab.offsetLeft,
+        width: activeTab.offsetWidth,
+      });
+      // アクティブなタブが画面外にある場合、スクロールして表示する
+      activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeTabIndex, items]);
 
   return (
     <div className="tabs-container">
@@ -22,12 +36,14 @@ const Tabs: React.FC<TabsProps> = ({ items }) => {
         {items.map((item, index) => (
           <li
             key={item.label}
+            ref={(el) => { tabsRef.current[index] = el; }}
             className={`tab-list-item ${index === activeTabIndex ? 'active' : ''}`}
             onClick={() => setActiveTabIndex(index)}
           >
             {item.label}
           </li>
         ))}
+        <div className="active-tab-indicator" style={indicatorStyle} />
       </ul>
 
       {/* アクティブなタブのコンテンツを表示 */}

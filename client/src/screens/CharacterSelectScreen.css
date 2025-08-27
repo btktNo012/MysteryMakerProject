@@ -3,17 +3,28 @@
     text-align: center;
     max-width: 1200px;
     margin: auto;
+    display: flex;
+    flex-direction: column;
+    /* 子要素の縦スクロールを有効にするため */
+    min-height: 0;
+    max-height: 100%;
 }
 
 .char-select-content {
-    height: 580px;
-    display: grid;
+    /* 固定高さを撤廃し、利用可能な高さを占有 */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    /* 子のoverflowを効かせるため */
+    min-height: 0;
 }
 .char-list {
+    /* 親がflexのため、ここを伸縮させてスクロール領域にする */
+    flex: 1 1 auto;
+    min-height: 0;
     list-style: none;
     padding-top: 10px;
     display: grid;
-    flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
     overflow-y: auto;
@@ -36,6 +47,15 @@
 .char-card-pc:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* 観戦者はホバー時の見た目変化なし・カーソル通常 */
+.char-select-container.spectator .char-card-pc {
+    cursor: default;
+}
+.char-select-container.spectator .char-card-pc:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .char-card-pc.selected-me {
@@ -106,11 +126,4 @@
 }
 .char-selector.npc {
     color: #000;
-}
-
-.navigation-area {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
 }

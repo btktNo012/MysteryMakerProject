@@ -23,6 +23,7 @@
   width: 90%;
   max-width: 720px;
   text-align: center;
+  color:#000
 }
 
 /* モーダルのタイトル */
@@ -46,6 +47,54 @@
   flex-direction: column;
   gap: 24px; /* 入力フィールド間のスペース */
   margin-bottom: 24px; /* 入力フィールド全体の下部マージン */
+}
+
+/* トグルスイッチ */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #ccc;
+  transition: .2s;
+  border-radius: 26px;
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 2px;
+  top: 2px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-text {
+  position: fixed;
+  margin-left: 30px;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: #4a90e2;
+}
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
 }
 /* モーダル内のメッセージ */
 .modal-message {
@@ -104,4 +153,12 @@
 }
 .modal-button-ok:hover {
     background-color: #007ba7;
+}
+.screen-howto{
+  color: rgba(0, 0, 0);
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  line-height: 1.9;
+  text-align: left;
+  white-space: pre-wrap;
 }

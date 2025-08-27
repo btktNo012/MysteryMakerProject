@@ -123,7 +123,6 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
   gamePhase,
   character,
   tabItems,
-  discussionTime,
   infoCards,
   players,
   myPlayer,

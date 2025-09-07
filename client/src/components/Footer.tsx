@@ -19,6 +19,7 @@ interface FooterProps {
   readingTimerSeconds: number; // 0 if not active
   discussionTimer: DiscussionTimer;
   onHowTo: () => void;
+  onCloseRoom?: () => void;
   onSetStandBy: () => void;
   operationButtons: OperationButton[];
   onStartTimer?: () => void;
@@ -36,6 +37,7 @@ const Footer: React.FC<FooterProps> = ({
   readingTimerSeconds,
   discussionTimer,
   onHowTo,
+  onCloseRoom,
   onSetStandBy,
   operationButtons,
   onStartTimer,
@@ -65,6 +67,9 @@ const Footer: React.FC<FooterProps> = ({
         <div className="screenHowto-area">
           {!myPlayer?.isSpectator && (
             <StyledButton onClick={onHowTo}>この画面について</StyledButton>
+          )}
+          {myPlayer?.isMaster && (
+            <StyledButton onClick={onCloseRoom}>ルーム解散</StyledButton>
           )}
         </div>
 

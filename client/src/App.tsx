@@ -217,6 +217,7 @@ function App() {
         // ゲーム情報の初期化処理
         initGameData();
       },
+      setDiscussionHowtoSeq: (s) => { setDiscussionHowtoSeq(s) }
     };
 
     // 4. サーバーからのイベントリスナーを登録
@@ -449,7 +450,9 @@ function App() {
   const handleProceedToSecondDiscussion = () => {
     if (!socket) return;
     socketService.emitChangeGamePhase(socket, roomId, 'secondDiscussion');
+    // 第二議論フェイズ開始時はチュートリアルツアーはしない
     setGamePhase('secondDiscussion');
+    setDiscussionHowtoSeq(0);
   };
 
 
@@ -730,10 +733,6 @@ function App() {
         // その他（第一議論、第二議論、感想戦（別途記載））
         break;
     }
-    // 投票フェイズの場合、緊急解散ボタン
-    if (gamePhase === 'voting' && myPlayer?.isMaster) {
-      ops.push({ label: '【緊急用】ルーム解散', onClick: () => dispatchModal({type: 'OPEN', modal: 'confirmCloseRoom' }) });
-    }
     // 感想戦または観戦者の場合、退室ボタン
     if (gamePhase === 'debriefing' || myPlayer?.isSpectator) {
       ops.push({ label: '退室', onClick: () => dispatchModal({ type: 'OPEN', modal: 'leaveConfirm' }) });
@@ -786,6 +785,7 @@ function App() {
               dispatchModal({ type: 'OPEN', modal: 'screenHowto' });
             }
           }}
+          onCloseRoom={() => dispatchModal({ type: 'OPEN', modal: 'confirmCloseRoom' })}
           onSetStandBy={() => socket && socketService.emitSetStandBy(socket, roomId, userId, true)}
           operationButtons={operationButtonsForPhase()}
           onStartTimer={() => handleStartDiscussionTimer(gamePhase as any, discussionSeconds)}

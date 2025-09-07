@@ -194,13 +194,13 @@ const AppModals: React.FC<AppModalsProps> = ({
 
       <Modal
         isOpen={modalState.confirmCloseRoom}
-        message="解散するとすべてのメンバーがタイトル画面に移動します。"
+        message="ルームを解散します"
         onConfirm={handleConfirmCloseRoom}
         onClose={() => dispatchModal({ type: 'CLOSE', modal: 'confirmCloseRoom' })}
         confirmButtonText="はい"
         closeButtonText="いいえ"
       >
-        <div className='modal-message'>よろしいですか？</div>
+        <div className='modal-message'>本当によろしいですか？</div>
       </Modal>
 
       <Modal isOpen={modalState.createRoom}

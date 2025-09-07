@@ -19,6 +19,7 @@ export interface SocketEventHandlers {
   setSelectedCharacterId: (id: string | null) => void;
   dispatchModal: (action: any) => void; // App.tsxのmodalReducerに依存
   handleRoomClosed: () => void;
+  setDiscussionHowtoSeq: (s: number) => void;
 }
 
 /**
@@ -75,11 +76,15 @@ export const registerEventListeners = (socket: Socket, handlers: SocketEventHand
     console.log('Game phase changed to:', newPhase);
     handlers.setGamePhase(newPhase);
     if (newPhase === 'firstDiscussion') {
+      // 第一議論フェイズ開始時はHO読み上げタイマーをリセット
       handlers.dispatchModal({ type: 'CLOSE', modal: 'hoReadForcedEnd' });
       handlers.dispatchModal({ type: 'CLOSE', modal: 'hoReadEnd' });
       handlers.setReadingTimerEndTime(null);
+      // 第一議論フェイズ開始時はチュートリアルツアーを開始
+      handlers.setDiscussionHowtoSeq(1);
     }
     if (newPhase === 'debriefing') {
+      // 感想戦開始時はHO読み上げタイマーをリセット
       handlers.setReadingTimerEndTime(null);
     }
   });

@@ -18,6 +18,7 @@
 .screenHowto-area {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 /* Player list */

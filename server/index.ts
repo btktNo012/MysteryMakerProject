@@ -25,3 +25,9 @@ httpServer.listen(PORT, () => {
   initializeDatabase();
 });
 
+process.on('SIGTERM', () => {
+  const mem = process.memoryUsage();
+  console.error('[shutdown] SIGTERM received', { rss: mem.rss, heapUsed: mem.heapUsed });
+  // 接続やタイマーをクリーンアップしてから
+  process.exit(0);
+});

@@ -378,7 +378,7 @@ const DiscussionScreen: React.FC<DiscussionScreenProps> = ({
                     >
                       {skill.used ? '使用済' : '使用する'}
                     </button>}
-              </li>
+                </li>
               ))}
             </ul>
           </div>)}

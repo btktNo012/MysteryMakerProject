@@ -3,7 +3,6 @@
   height: 100vh;         /* 固定高でフッターを常時表示 */
   display: flex;
   flex-direction: column;
-  overflow: hidden;      /* 本体のはみ出しを抑止 */
 }
 
 /* Scrollable content area between breadcrumbs and footer */
